@@ -48,11 +48,13 @@ doctors.get("/", async (c) => {
 doctors.get("/me/profile", requireAuthenticated, async (c) => {
   const auth = c.get("auth" as never) as JwtPayload;
   const doctor = await c.env.DB.prepare(
-    `SELECT id, phone, full_name, specialty_main, city, phone_public,
+    `SELECT id, phone, full_name, official_name, roster_id, specialty_main, city, phone_public,
             medical_council_number, email, bio, avatar_key, card_template, status, role
      FROM doctors WHERE id = ?`
   ).bind(auth.sub).first<Record<string, unknown>>();
   if (!doctor) return c.json({ error: "پروفایل پیدا نشد" }, 404);
+  // The imported/verified name is an admin-only audit field.
+  delete doctor.official_name;
   const [locations, social, extra] = await Promise.all([
     c.env.DB.prepare("SELECT id, location_name, address, days_of_week FROM work_locations WHERE doctor_id = ?").bind(auth.sub).all(),
     c.env.DB.prepare("SELECT id, platform, value, visibility FROM social_links WHERE doctor_id = ?").bind(auth.sub).all(),
@@ -128,7 +130,7 @@ doctors.put("/me/profile", requireAuthenticated, async (c) => {
 
   await c.env.DB.prepare(
     `UPDATE doctors SET
-       full_name = COALESCE(?, full_name),
+       full_name = COALESCE(NULLIF(TRIM(?), ''), full_name),
        specialty_main = COALESCE(?, specialty_main),
        city = COALESCE(?, city),
        phone_public = COALESCE(?, phone_public),

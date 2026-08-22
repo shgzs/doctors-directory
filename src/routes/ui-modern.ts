@@ -247,6 +247,9 @@ label.field{display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:va
 .daytoggle{padding:6px 12px;border-radius:999px;border:1.4px solid var(--line);background:var(--card);font-size:12.5px;cursor:pointer}
 .daytoggle.on{background:var(--oxblood);color:#fff8ee;border-color:var(--oxblood)}
 .item-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;margin-bottom:8px}
+.identity-note{padding:10px 12px;border-radius:12px;background:var(--clinical-light);color:#315d66;font-size:12.5px;margin-top:8px}
+.request-card{cursor:pointer;text-align:right}.request-card.selected{border-color:var(--oxblood);box-shadow:0 0 0 3px #7c2f3212}.request-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.answer-card{padding:13px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);margin-bottom:9px}.answer-card .answer-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.request-detail{margin-top:22px}
+.profile-intro{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:18px 20px;margin-bottom:20px;border-radius:18px;color:#fff;background:linear-gradient(120deg,var(--clinical),#477b7a);box-shadow:var(--shadow-sm)}.profile-intro h3{color:#fff;font-size:18px}.profile-progress{min-width:150px}.profile-progress small{display:flex;justify-content:space-between;color:#e5f2ef;font-size:12px}.profile-progress i{display:block;height:7px;margin-top:6px;border-radius:99px;background:#ffffff35;overflow:hidden}.profile-progress b{display:block;height:100%;border-radius:99px;background:var(--brass-light)}
 
 /* ---------- admin ---------- */
 .pending-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-bottom:30px}
@@ -285,6 +288,7 @@ footer.site{padding:34px 0 60px;text-align:center;color:var(--ink-soft);font-siz
   .form-grid{grid-template-columns:1fr}
   .tabs{order:3;width:100%;justify-content:flex-start;overflow-x:auto}
   .topbar-inner{flex-wrap:wrap}
+  .profile-intro{align-items:stretch;flex-direction:column}.profile-progress{min-width:0}
 }
 </style>
 </head>
@@ -457,7 +461,7 @@ function renderChrome(){
   const tabs = [
     ["#/home", "خانه"],
     ["#/directory", "دفترچه"],
-    ["#/referrals", "معرفی‌نامه‌ها"],
+    ["#/requests", "درخواست معرفی"],
   ];
   if (TOKEN) tabs.push(["#/profile", "پروفایل من"]);
   if (ME && ME.role === "admin") tabs.push(["#/admin", "مدیریت"]);
@@ -605,6 +609,42 @@ async function openDoctorModal(id){
   } catch (e) { toast(e.message, true); }
 }
 
+async function viewRequests(){
+  if (!TOKEN) { view.innerHTML = gatedNotice("درخواست معرفی فقط برای اعضای واردشده قابل مشاهده‌ست."); return; }
+  view.innerHTML = \`
+    <div class="section-head"><div><h2>درخواست‌های معرفی</h2><p class="muted">اگر دنبال پزشک یا همکار خوبی هستی، سؤال را برای جمع بنویس.</p></div><span class="stamp">هر جواب، یک تجربه‌ی مفید</span></div>
+    <div class="card" style="margin-bottom:22px"><h3 style="font-size:15px;margin-bottom:12px">سؤال جدید</h3>
+      <div class="form-grid"><label class="field full">دنبال چه کسی هستی؟<input type="text" id="rqTitle" placeholder="مثلاً ارتوپد اطفال خوب در اصفهان می‌شناسید؟"></label>
+      <label class="field">تخصص<input type="text" id="rqSpecialty"></label><label class="field">شهر<input type="text" id="rqCity"></label>
+      <label class="field full">توضیح بیشتر<textarea id="rqDetails" placeholder="اگر توضیحی درباره‌ی شرایط یا ترجیح خودت داری…"></textarea></label></div>
+      <button class="btn" style="margin-top:14px" id="addRequestBtn">ثبت درخواست</button>
+    </div>
+    <div class="grid-cards" id="requestList"><div class="empty">در حال بارگذاری…</div></div>
+    <div id="requestDetail" class="request-detail"></div>\`;
+
+  async function load(){
+    try {
+      const d = await api("/api/recommendation-requests");
+      $("requestList").innerHTML = d.requests.length ? d.requests.map(x => \`
+        <article class="member-card request-card" data-request-id="\${esc(x.id)}"><h3>\${esc(x.title)}</h3>
+          <div class="request-meta"><span class="stamp">\${esc([x.specialty,x.city].filter(Boolean).join(" · ") || "بدون دسته‌بندی")}</span><span class="status-pill \${x.status}">\${x.status === "answered" ? "پاسخ دارد" : x.status === "closed" ? "بسته‌شده" : "باز"}</span></div>
+          <p class="muted" style="font-size:12.5px;margin-top:9px">\${esc(x.answer_count || 0)} پاسخ · از طرف \${esc(x.asked_by || "—")}</p></article>\`).join("") : '<div class="empty">هنوز درخواستی ثبت نشده.</div>';
+      $("requestList").querySelectorAll("[data-request-id]").forEach(card => card.onclick = () => openRequest(card.dataset.requestId));
+    } catch (e) { toast(e.message, true); }
+  }
+  async function openRequest(id){
+    try {
+      const x = await api("/api/recommendation-requests/" + encodeURIComponent(id));
+      $("requestDetail").innerHTML = \`<div class="card"><div class="section-head"><div><h3 style="font-size:17px">\${esc(x.title)}</h3><p class="muted">\${esc(x.details || "توضیحی ثبت نشده")}</p></div><span class="status-pill \${x.status}">\${x.answers.length ? x.answers.length + " پاسخ ثبت شده" : "هنوز پاسخی ندارد"}</span></div>
+        <div>\${x.answers.length ? x.answers.map(a => \`<div class="answer-card"><div class="answer-head"><b>\${esc(a.recommended_name)}</b><span class="muted" style="font-size:12px">پیشنهاد از \${esc(a.answered_by || "—")}</span></div><div class="muted" style="font-size:13px;margin-top:5px">\${esc([a.specialty,a.city,a.phone].filter(Boolean).join(" · "))}</div>\${a.notes ? \`<p style="font-size:13px;margin:7px 0 0">\${esc(a.notes)}</p>\` : ""}</div>\`).join("") : '<p class="muted">اولین پاسخ را شما ثبت کنید.</p>'}</div>
+        \${x.status !== "closed" ? \`<hr class="pulse-divider"><h4 style="font-size:14px">پاسخ شما</h4><div class="form-grid"><label class="field">نام پزشک یا فرد پیشنهادی<input id="ansName"></label><label class="field">تخصص<input id="ansSpecialty"></label><label class="field">شهر<input id="ansCity"></label><label class="field">شماره تماس<input id="ansPhone"></label><label class="field full">توضیح شما<textarea id="ansNotes"></textarea></label></div><button class="btn" style="margin-top:12px" id="sendAnswerBtn">ثبت پاسخ</button>\` : ""}</div>\`;
+      const send = $("sendAnswerBtn"); if (send) send.onclick = async () => { const recommendedName=$("ansName").value.trim(); if (!recommendedName) return toast("نام فرد پیشنهادی را وارد کن",true); try { await api("/api/recommendation-requests/"+encodeURIComponent(id)+"/answers",{method:"POST",body:JSON.stringify({recommendedName,specialty:$("ansSpecialty").value,city:$("ansCity").value,phone:$("ansPhone").value,notes:$("ansNotes").value})}); toast("پاسخ ثبت شد"); await load(); await openRequest(id); } catch(e){toast(e.message,true)} };
+    } catch (e) { toast(e.message, true); }
+  }
+  $("addRequestBtn").onclick = async () => { const title=$("rqTitle").value.trim(); if (!title) return toast("متن درخواست را وارد کن",true); try { await api("/api/recommendation-requests",{method:"POST",body:JSON.stringify({title,specialty:$("rqSpecialty").value,city:$("rqCity").value,details:$("rqDetails").value})}); ["rqTitle","rqSpecialty","rqCity","rqDetails"].forEach(id=>$(id).value=""); toast("درخواست ثبت شد"); load(); } catch(e){toast(e.message,true)} };
+  load();
+}
+
 async function viewReferrals(){
   if (!TOKEN) { view.innerHTML = gatedNotice("معرفی‌نامه‌ها فقط برای اعضای واردشده قابل مشاهده‌ست."); return; }
   view.innerHTML = \`
@@ -659,8 +699,10 @@ async function viewProfile(){
   if (!TOKEN) { view.innerHTML = gatedNotice("برای مدیریت پروفایلت باید وارد بشی."); return; }
   await loadMe();
   const d = ME;
+  const profileScore = Math.round(([d.full_name,d.specialty_main,d.city,d.avatar_key,d.bio,d.phone_public,d.email].filter(Boolean).length / 7) * 100);
   view.innerHTML = \`
     <div class="section-head"><h2>پروفایل من</h2></div>
+    <div class="profile-intro"><div><h3>کارت تو، روایت کوتاه توست</h3><div style="font-size:13px;color:#e5f2ef">هرچه اطلاعات کامل‌تر باشد، همکلاسی‌ها راحت‌تر پیدایت می‌کنند.</div></div><div class="profile-progress"><small><span>کامل بودن پروفایل</span><b style="color:#fff">\${profileScore}%</b></small><i><b style="width:\${profileScore}%"></b></i></div></div>
     <div class="status-banner \${d.status}">
       <span class="seal sm">\${d.status === "approved" ? "✓" : "…"}</span>
       <div>\${d.status === "approved" ? "عضویت تایید شده — پروفایلت برای اعضا و QR کارت ویزیت فعاله." : "در انتظار تایید مدیر گروه — به‌محض تایید، پروفایلت فعال می‌شه."}</div>
@@ -676,12 +718,13 @@ async function viewProfile(){
         </div>
       </div>
       <div class="form-grid">
-        <label class="field">نام کامل<input type="text" id="pfName" value="\${esc(d.full_name||"")}"></label>
+        <label class="field">نام نمایشی<input type="text" id="pfName" value="\${esc(d.full_name||"")}"><div class="identity-note">این نام روی کارت شما نمایش داده می‌شود. نام ثبت‌شده‌ی اولیه فقط برای مدیر قابل مشاهده است.</div></label>
         <label class="field">تخصص<input type="text" id="pfSpecialty" value="\${esc(d.specialty_main||"")}"></label>
         <label class="field">شهر<input type="text" id="pfCity" value="\${esc(d.city||"")}"></label>
         <label class="field">شماره عمومی (برای بیماران)<input type="tel" id="pfPhonePublic" value="\${esc(d.phone_public||"")}"></label>
         <label class="field">شماره نظام پزشکی<input type="text" id="pfCouncil" value="\${esc(d.medical_council_number||"")}"></label>
         <label class="field">ایمیل<input type="email" id="pfEmail" value="\${esc(d.email||"")}"></label>
+        <label class="field">قالب کارت<select id="pfCardTemplate"><option value="default" \${d.card_template === "default" ? "selected" : ""}>دفترچه پزشکی</option><option value="calm" \${d.card_template === "calm" ? "selected" : ""}>آرام و دوستانه</option><option value="dark" \${d.card_template === "dark" ? "selected" : ""}>رسمی و تیره</option></select></label>
         <label class="field full">درباره من<textarea id="pfBio">\${esc(d.bio||"")}</textarea></label>
       </div>
       <button class="btn" style="margin-top:14px" id="saveProfileBtn">ذخیره‌ی پروفایل</button>
@@ -744,7 +787,7 @@ async function viewProfile(){
       await api("/api/doctors/me/profile", { method: "PUT", body: JSON.stringify({
         fullName: $("pfName").value, specialtyMain: $("pfSpecialty").value, city: $("pfCity").value,
         phonePublic: $("pfPhonePublic").value, medicalCouncilNumber: $("pfCouncil").value,
-        email: $("pfEmail").value, bio: $("pfBio").value
+        email: $("pfEmail").value, bio: $("pfBio").value, cardTemplate: $("pfCardTemplate").value
       })});
       toast("پروفایل ذخیره شد"); await loadMe(); renderChrome();
     } catch (e) { toast(e.message, true); }
@@ -825,7 +868,9 @@ async function viewAdmin(){
         <select id="adminStatus"><option value="">همه وضعیت‌ها</option><option value="approved">تایید‌شده</option><option value="pending">در انتظار</option><option value="rejected">رد‌شده</option></select>
       </div>
     </div>
-    <div class="admin-table"><table id="adminTable"><thead><tr><th>نام</th><th>شماره</th><th>وضعیت</th><th>نقش</th><th>عملیات</th></tr></thead><tbody></tbody></table></div>\`;
+    <div class="admin-table"><table id="adminTable"><thead><tr><th>نام</th><th>نام اصلی</th><th>شماره</th><th>وضعیت</th><th>نقش</th><th>عملیات</th></tr></thead><tbody></tbody></table></div>
+    <div class="section-head" style="margin-top:30px"><h3 style="font-size:15px">فهرست همکلاسی‌ها و شماره موبایل</h3><input type="search" id="rosterSearch" placeholder="جست‌وجوی نام یا شماره…" style="width:240px"></div>
+    <div class="admin-table"><table id="rosterTable"><thead><tr><th>نام اصلی</th><th>رشته</th><th>شماره نظام</th><th>موبایل</th><th>عملیات</th></tr></thead><tbody></tbody></table></div>\`;
 
   async function loadPending(){
     try {
@@ -856,7 +901,7 @@ async function viewAdmin(){
     try {
       const d = await api("/api/admin/doctors?" + q.toString());
       document.querySelector("#adminTable tbody").innerHTML = d.doctors.map(x => \`
-        <tr><td>\${esc(x.full_name || "—")}</td><td>\${esc(x.phone)}</td>
+        <tr><td>\${esc(x.full_name || "—")}</td><td>\${esc(x.official_name || "—")}\${x.name_changed ? '<span class="status-pill pending" style="margin-right:5px">ویرایش شده</span>' : ''}</td><td>\${esc(x.phone)}</td>
         <td><span class="status-pill \${x.status}">\${x.status === "approved" ? "تایید‌شده" : x.status === "pending" ? "در انتظار" : "رد‌شده"}</span></td>
         <td>\${x.role === "admin" ? "مدیر" : "عضو"}</td>
         <td><button class="btn sm ghost" data-role="\${x.id}" data-cur="\${x.role}">\${x.role === "admin" ? "حذف نقش مدیر" : "مدیر کردن"}</button></td></tr>\`
@@ -870,7 +915,9 @@ async function viewAdmin(){
   }
   $("adminSearch").onkeydown = (e) => { if (e.key === "Enter") loadTable(); };
   $("adminStatus").onchange = loadTable;
-  loadPending(); loadTable();
+  async function loadRoster(){ try { const q=$("rosterSearch").value.trim(); const d=await api("/api/admin/roster"+(q?"?q="+encodeURIComponent(q):"")); $("rosterTable tbody").innerHTML=d.roster.map(x=>\`<tr><td>\${esc(x.official_name)}</td><td>\${esc(x.field||"—")}</td><td>\${esc(x.council_number||"—")}</td><td>\${esc(x.phone||"—")}</td><td><button class="btn sm ghost" data-roster-phone="\${esc(x.id)}">\${x.phone?"تغییر شماره":"ثبت شماره"}</button></td></tr>\`).join(""); $("rosterTable").querySelectorAll("[data-roster-phone]").forEach(b=>b.onclick=async()=>{const phone=prompt("شماره موبایل را وارد کنید:");if(!phone)return;try{await api("/api/admin/roster/"+encodeURIComponent(b.dataset.rosterPhone)+"/phone",{method:"PATCH",body:JSON.stringify({phone})});toast("شماره ذخیره شد");loadRoster();loadTable()}catch(e){toast(e.message,true)}}); } catch(e){toast(e.message,true)} }
+  $("rosterSearch").onkeydown=e=>{if(e.key==="Enter")loadRoster()};
+  loadPending(); loadTable(); loadRoster();
 }
 
 /* ============================================================
@@ -886,6 +933,7 @@ async function renderRoute(){
   renderChrome();
   if (path === "home" || path === "") return viewHome();
   if (path === "directory") return viewDirectory();
+  if (path === "requests") return viewRequests();
   if (path === "referrals") return viewReferrals();
   if (path === "profile") return viewProfile();
   if (path === "admin") return viewAdmin();

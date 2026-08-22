@@ -53,6 +53,20 @@ npm run db:migrate:remote
 
 > ⚠️ یادآوری مهم قبل از `npm run deploy`: فایل `.dev.vars` نباید منتشر شود. برای محیط واقعی، Secretها را با `wrangler secret put` یا پنل Cloudflare تنظیم کن و مقدار `DEBUG_MODE` را از `"true"` به `"false"` تغییر بده.
 
+## فهرست همکلاسی‌ها و migration دیتابیس
+
+فهرست واردشده از `data/tums74.json` در جدول جداگانه‌ی `class_roster` نگهداری می‌شود. این جدول با پروفایل اصلی پزشکان یکی نیست؛ مدیر می‌تواند بعداً یک شماره موبایل برای هر فرد ثبت کند تا پروفایل ورود او ساخته و به همان رکورد متصل شود.
+
+برای اجرای محلی:
+
+```text
+npm run db:migrate:local
+npm run roster:generate
+npm run db:seed:roster:local
+```
+
+برای انتقال ساختار به Cloudflare، ابتدا migration را با `--remote` اجرا کن. واردکردن فهرست شخصی به remote باید آگاهانه و جداگانه انجام شود؛ این اطلاعات عمداً در Git و انتشار عمومی قرار نمی‌گیرد.
+
 ```bash
 npx wrangler secret put MELIPAYAMAK_USERNAME
 npx wrangler secret put MELIPAYAMAK_PASSWORD

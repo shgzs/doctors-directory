@@ -6,6 +6,7 @@ import { attachAuth } from "./lib/middleware";
 import authRoutes from "./routes/auth";
 import doctorRoutes from "./routes/doctors";
 import referralRoutes from "./routes/referrals";
+import recommendationRequestRoutes from "./routes/recommendation-requests";
 import adminRoutes from "./routes/admin";
 import resolveRoutes from "./routes/resolve";
 import { avatarUpload, assetServe } from "./routes/assets";
@@ -22,6 +23,7 @@ app.route("/app", uiRoutes);
 app.route("/api/auth", authRoutes);
 app.route("/api/doctors", doctorRoutes);
 app.route("/api/referrals", referralRoutes);
+app.route("/api/recommendation-requests", recommendationRequestRoutes);
 app.route("/api/admin", adminRoutes);
 app.route("/api/doctors", avatarUpload); // adds POST /api/doctors/me/avatar
 app.route("/api/assets", assetServe);    // adds GET /api/assets/:key
