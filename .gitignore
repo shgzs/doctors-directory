@@ -1,0 +1,8 @@
+.dev.vars
+.wrangler/
+node_modules/
+
+# Local/private material — do not publish personal class data or real photos.
+data/*
+!data/README.md
+*.bak

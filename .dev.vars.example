@@ -1,0 +1,5 @@
+# Copy this file to .dev.vars for local development and fill in real values.
+MELIPAYAMAK_USERNAME=
+MELIPAYAMAK_PASSWORD=
+MELIPAYAMAK_SENDER=
+JWT_SECRET=

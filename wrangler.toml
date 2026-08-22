@@ -1,0 +1,37 @@
+name = "doctors-directory-api"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+
+# ---- D1 Database ----
+# Create with: npx wrangler d1 create doctors-directory
+# Then paste the returned database_id below.
+[[d1_databases]]
+binding = "DB"
+database_name = "doctors-directory"
+database_id = "3797587a-0dd8-432f-9566-a53101704f1d"
+migrations_dir = "./migrations"
+
+# ---- KV Namespace (used for OTP codes, short TTL) ----
+# Create with: npx wrangler kv namespace create OTP_KV
+[[kv_namespaces]]
+binding = "OTP_KV"
+id = "6c2f5bcecca94c79b868e98717fb1898"
+
+# ---- KV Namespace for uploaded images (avatars, etc.) ----
+# Uploaded images are stored in KV for this small project; R2 is not used.
+# Create with: npx wrangler kv namespace create ASSETS_KV
+[[kv_namespaces]]
+binding = "ASSETS_KV"
+id = "0c3dc359c92d4899a180c5016df4a56d"
+
+# ---- Plain vars (not secret) ----
+[vars]
+# When "true": SMS is skipped, the OTP is printed/returned, and diagnostic
+# error details are included in responses for local development.
+# Set to "false" before any real deploy.
+DEBUG_MODE = "true"
+
+# ---- Secrets ----
+# Local development values are kept in .dev.vars (ignored by git).
+# Before publishing, remove/rotate local values and configure production
+# secrets with `wrangler secret put` or the Cloudflare dashboard.
