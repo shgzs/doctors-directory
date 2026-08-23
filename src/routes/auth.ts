@@ -101,8 +101,8 @@ auth.post("/verify-otp", async (c) => {
     const status = preapproved ? "approved" : "pending";
 
     await c.env.DB.prepare(
-      `INSERT INTO doctors (id, phone, full_name, official_name, role, status)
-       VALUES (?, ?, ?, NULL, 'member', ?)`
+      `INSERT INTO doctors (id, public_id, phone, full_name, official_name, role, status)
+       VALUES (?, lower(substr(hex(randomblob(6)), 1, 12)), ?, ?, NULL, 'member', ?)`
     )
       .bind(id, normalized, "", status)
       .run();

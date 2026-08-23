@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS specialties (
 -- Core doctor profile
 CREATE TABLE IF NOT EXISTS doctors (
   id TEXT PRIMARY KEY,                 -- uuid, used in canonical /d/{id} URLs
+  public_id TEXT UNIQUE,               -- short stable identifier for public profile links
   phone TEXT UNIQUE NOT NULL,          -- normalized, used for OTP login
   full_name TEXT NOT NULL,
   official_name TEXT,                  -- imported/admin-confirmed name; never changed by member

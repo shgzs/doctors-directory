@@ -55,7 +55,7 @@ const PAGE = /* html */ `<!doctype html>
   --font-body:"Vazirmatn","Segoe UI",Tahoma,sans-serif;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:auto}
 body{
   margin:0;min-height:100vh;color:var(--ink);background:var(--paper);
   font-family:var(--font-body);line-height:1.8;direction:rtl;
@@ -153,6 +153,7 @@ h1,h2,h3{font-family:var(--font-display);color:var(--ink);margin:0 0 6px;font-we
 .btn.danger:hover{background:#9b3f4512}
 .iconbtn{width:38px;height:38px;border-radius:50%;background:var(--paper-2);border:1px solid var(--line);display:grid;place-items:center;font-size:16px}
 .iconbtn:hover{background:var(--brass-light)}
+.logout-btn{width:auto;padding:0 12px;border-radius:12px;font-size:12px;color:var(--oxblood)}
 
 /* ---------- cards ---------- */
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--shadow);padding:26px}
@@ -250,6 +251,7 @@ label.field{display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:va
 .identity-note{padding:10px 12px;border-radius:12px;background:var(--clinical-light);color:#315d66;font-size:12.5px;margin-top:8px}
 .request-card{cursor:pointer;text-align:right}.request-card.selected{border-color:var(--oxblood);box-shadow:0 0 0 3px #7c2f3212}.request-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.answer-card{padding:13px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);margin-bottom:9px}.answer-card .answer-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}.request-detail{margin-top:22px}
 .profile-intro{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:18px 20px;margin-bottom:20px;border-radius:18px;color:#fff;background:linear-gradient(120deg,var(--clinical),#477b7a);box-shadow:var(--shadow-sm)}.profile-intro h3{color:#fff;font-size:18px}.profile-progress{min-width:150px}.profile-progress small{display:flex;justify-content:space-between;color:#e5f2ef;font-size:12px}.profile-progress i{display:block;height:7px;margin-top:6px;border-radius:99px;background:#ffffff35;overflow:hidden}.profile-progress b{display:block;height:100%;border-radius:99px;background:var(--brass-light)}
+.social-presets,.extra-presets{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 14px}.social-preset,.extra-presets button{border:1px solid var(--line);border-radius:999px;padding:6px 11px;background:var(--paper);color:var(--ink-soft);font-size:12px;cursor:pointer}.social-preset:hover,.extra-presets button:hover{border-color:var(--oxblood);color:var(--oxblood);background:#fff8ee}
 
 /* ---------- admin ---------- */
 .pending-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-bottom:30px}
@@ -427,6 +429,8 @@ function openLoginModal(){
     finally { $("sendOtpBtn").disabled = false; }
   };
 
+  $("loginPhone").onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); $("sendOtpBtn").click(); } };
+
   $("resendOtpBtn").onclick = () => $("sendOtpBtn").click();
 
   const digits = () => Array.from(document.querySelectorAll(".otp-d")).map(i => i.value).join("");
@@ -451,6 +455,7 @@ function openLoginModal(){
     } catch (e) { toast(e.message, true); }
     finally { $("verifyOtpBtn").disabled = false; }
   };
+  document.querySelectorAll(".otp-d").forEach(input => input.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); $("verifyOtpBtn").click(); } });
 }
 
 /* ============================================================
@@ -471,7 +476,7 @@ function renderChrome(){
   ).join("");
 
   $("topActions").innerHTML = TOKEN
-    ? '<span class="who">' + (ME ? esc(ME.full_name || "بدون نام") : "…") + '</span><button class="iconbtn" id="logoutBtn" title="خروج">⎋</button>'
+    ? '<span class="who">' + (ME ? esc(ME.full_name || "بدون نام") : "…") + '</span><button class="iconbtn logout-btn" id="logoutBtn" title="خروج از حساب" aria-label="خروج از حساب">خروج</button>'
     : '<button class="btn" id="loginBtn">ورود</button>';
 
   const loginBtn = $("loginBtn"); if (loginBtn) loginBtn.onclick = openLoginModal;
@@ -503,12 +508,21 @@ async function viewHome(){
         </figure>
       </div>
     </section>
-    <div class="pulse-divider" style="margin:6px 0 0"></div>\`;
+    <div class="pulse-divider" style="margin:6px 0 0"></div>
+    <section class="card recent-requests" id="recentRequests" style="display:none"><div class="section-head"><div><h2 style="font-size:19px">آخرین سؤال‌های جمع</h2><p class="muted">اگر تجربه‌ای داری، به یکی از دوستان کمک کن.</p></div><a class="btn ghost sm" href="#/requests">دیدن همه</a></div><div class="grid-cards" id="recentRequestGrid"></div></section>\`;
   $("heroLoginBtn").onclick = openLoginModal;
   try {
     const d = await api("/api/doctors");
     $("heroStat").innerHTML = '<b>' + d.doctors.length + '</b> پزشک عضو این دورهمی هستند';
   } catch { $("heroStat").textContent = ""; }
+  if (TOKEN) {
+    try {
+      const d = await api("/api/recommendation-requests?status=open");
+      const week = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const recent = d.requests.filter(x => Date.parse(String(x.created_at).replace(" ", "T") + "Z") >= week).slice(0, 3);
+      if (recent.length) { $("recentRequests").style.display = "block"; $("recentRequestGrid").innerHTML = recent.map(x => '<a class="member-card request-card" href="#/requests"><h3>' + esc(x.title) + '</h3><div class="request-meta"><span class="stamp">' + esc([x.specialty,x.city].filter(Boolean).join(" · ") || "بدون دسته‌بندی") + '</span></div><p class="muted" style="font-size:12px">' + esc(x.answer_count || 0) + ' پاسخ</p></a>').join(""); }
+    } catch { /* guests and pending users simply do not see member questions */ }
+  }
 }
 
 async function viewDirectory(){
@@ -542,7 +556,7 @@ async function viewDirectory(){
   }
   $("dirSearchBtn").onclick = load;
   $("dirSearch").onkeydown = (e) => { if (e.key === "Enter") load(); };
-  load();
+  load().then(() => { const query = new URLSearchParams(location.hash.split("?")[1] || ""); const doctor = query.get("doctor"); if (doctor) openDoctorModal(doctor); });
 }
 
 function contactRowsHtml(d, canSeePrivate){
@@ -560,7 +574,7 @@ async function openDoctorModal(id){
   try {
     const d = await api("/api/doctors/" + encodeURIComponent(id));
     const canSeePrivate = Boolean(ME);
-    const url = location.origin + "/d/" + d.id;
+    const url = location.origin + "/d/" + (d.public_id || d.id);
     modalRoot.innerHTML = \`
       <div class="doctor-modal-backdrop" id="docBackdrop">
         <div class="doctor-modal">
@@ -743,6 +757,13 @@ async function viewProfile(){
 
     <div class="card" style="margin-bottom:20px">
       <h3 style="font-size:15px">شبکه‌های اجتماعی</h3>
+      <div class="social-presets" id="socialPresets">
+        <button type="button" class="social-preset" data-platform="WhatsApp">◉ واتساپ</button>
+        <button type="button" class="social-preset" data-platform="Telegram">➤ تلگرام</button>
+        <button type="button" class="social-preset" data-platform="Instagram">◎ اینستاگرام</button>
+        <button type="button" class="social-preset" data-platform="LinkedIn">in لینکدین</button>
+        <button type="button" class="social-preset" data-platform="Website">⌁ وب‌سایت</button>
+      </div>
       <div id="socList"></div>
       <div class="list-add">
         <label class="field">پلتفرم (واتساپ/تلگرام/…)<input type="text" id="socPlatform"></label>
@@ -756,6 +777,7 @@ async function viewProfile(){
 
     <div class="card">
       <h3 style="font-size:15px">فیلدهای تکمیلی (هرچیز دیگه)</h3>
+      <div class="extra-presets" id="extraPresets"><button type="button" data-field-key="زبان‌ها">زبان‌ها</button><button type="button" data-field-key="زیرتخصص">زیرتخصص</button><button type="button" data-field-key="نحوه نوبت‌دهی">نحوه نوبت‌دهی</button><button type="button" data-field-key="علایق و خاطرات">علایق و خاطرات</button></div>
       <div id="fieldList"></div>
       <div class="list-add">
         <label class="field">عنوان<input type="text" id="fldKey"></label>
@@ -820,6 +842,18 @@ async function viewProfile(){
       catch (e) { toast(e.message, true); }
     });
   }
+  $("socialPresets").querySelectorAll("[data-platform]").forEach(btn => btn.onclick = () => {
+    const existing = (ME.socialLinks || []).find(s => String(s.platform).toLowerCase() === btn.dataset.platform.toLowerCase());
+    $("socPlatform").value = btn.dataset.platform;
+    $("socValue").value = existing ? existing.value : "";
+    $("socValue").focus();
+  });
+  $("extraPresets").querySelectorAll("[data-field-key]").forEach(btn => btn.onclick = () => {
+    $("fldKey").value = btn.dataset.fieldKey;
+    const existing = (ME.extraFields || []).find(f => f.field_key === btn.dataset.fieldKey);
+    $("fldValue").value = existing ? existing.field_value : "";
+    $("fldValue").focus();
+  });
   renderLoc(); renderSoc(); renderFld();
 
   $("addLocBtn").onclick = async () => {
@@ -915,7 +949,7 @@ async function viewAdmin(){
   }
   $("adminSearch").onkeydown = (e) => { if (e.key === "Enter") loadTable(); };
   $("adminStatus").onchange = loadTable;
-  async function loadRoster(){ try { const q=$("rosterSearch").value.trim(); const d=await api("/api/admin/roster"+(q?"?q="+encodeURIComponent(q):"")); $("rosterTable tbody").innerHTML=d.roster.map(x=>\`<tr><td>\${esc(x.official_name)}</td><td>\${esc(x.field||"—")}</td><td>\${esc(x.council_number||"—")}</td><td>\${esc(x.phone||"—")}</td><td><button class="btn sm ghost" data-roster-phone="\${esc(x.id)}">\${x.phone?"تغییر شماره":"ثبت شماره"}</button></td></tr>\`).join(""); $("rosterTable").querySelectorAll("[data-roster-phone]").forEach(b=>b.onclick=async()=>{const phone=prompt("شماره موبایل را وارد کنید:");if(!phone)return;try{await api("/api/admin/roster/"+encodeURIComponent(b.dataset.rosterPhone)+"/phone",{method:"PATCH",body:JSON.stringify({phone})});toast("شماره ذخیره شد");loadRoster();loadTable()}catch(e){toast(e.message,true)}}); } catch(e){toast(e.message,true)} }
+  async function loadRoster(){ try { const q=$("rosterSearch").value.trim(); const d=await api("/api/admin/roster"+(q?"?q="+encodeURIComponent(q):"")); document.querySelector("#rosterTable tbody").innerHTML=d.roster.map(x=>\`<tr><td>\${esc(x.official_name)}</td><td>\${esc(x.field||"—")}</td><td>\${esc(x.council_number||"—")}</td><td>\${esc(x.phone||"—")}</td><td><button class="btn sm ghost" data-roster-phone="\${esc(x.id)}">\${x.phone?"تغییر شماره":"ثبت شماره"}</button></td></tr>\`).join(""); $("rosterTable").querySelectorAll("[data-roster-phone]").forEach(b=>b.onclick=async()=>{const phone=prompt("شماره موبایل را وارد کنید:");if(!phone)return;try{await api("/api/admin/roster/"+encodeURIComponent(b.dataset.rosterPhone)+"/phone",{method:"PATCH",body:JSON.stringify({phone})});toast("شماره ذخیره شد");loadRoster();loadTable()}catch(e){toast(e.message,true)}}); } catch(e){toast(e.message,true)} }
   $("rosterSearch").onkeydown=e=>{if(e.key==="Enter")loadRoster()};
   loadPending(); loadTable(); loadRoster();
 }

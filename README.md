@@ -67,6 +67,8 @@ npm run db:seed:roster:local
 
 برای انتقال ساختار به Cloudflare، ابتدا migration را با `--remote` اجرا کن. واردکردن فهرست شخصی به remote باید آگاهانه و جداگانه انجام شود؛ این اطلاعات عمداً در Git و انتشار عمومی قرار نمی‌گیرد.
 
+Migration بعدی `0003_public_profile_ids.sql` برای لینک‌های عمومی کوتاه است؛ لینک‌ها دیگر بر اساس شماره موبایل ساخته نمی‌شوند.
+
 ```bash
 npx wrangler secret put MELIPAYAMAK_USERNAME
 npx wrangler secret put MELIPAYAMAK_PASSWORD

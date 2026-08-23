@@ -48,7 +48,7 @@ doctors.get("/", async (c) => {
 doctors.get("/me/profile", requireAuthenticated, async (c) => {
   const auth = c.get("auth" as never) as JwtPayload;
   const doctor = await c.env.DB.prepare(
-    `SELECT id, phone, full_name, official_name, roster_id, specialty_main, city, phone_public,
+    `SELECT id, public_id, phone, full_name, official_name, roster_id, specialty_main, city, phone_public,
             medical_council_number, email, bio, avatar_key, card_template, status, role
      FROM doctors WHERE id = ?`
   ).bind(auth.sub).first<Record<string, unknown>>();
@@ -70,11 +70,11 @@ doctors.get("/:id", async (c) => {
   const auth = c.get("auth" as never) as JwtPayload | undefined;
 
   const doctor = await c.env.DB.prepare(
-    `SELECT id, full_name, specialty_main, city, phone_public, phone,
+    `SELECT id, public_id, full_name, specialty_main, city, phone_public, phone,
             medical_council_number, email, bio, avatar_key, card_template
-     FROM doctors WHERE id = ? AND status = 'approved'`
+     FROM doctors WHERE (id = ? OR public_id = ? OR medical_council_number = ?) AND status = 'approved'`
   )
-    .bind(id)
+    .bind(id, id, id)
     .first<Record<string, unknown>>();
 
   if (!doctor) return c.json({ error: "پیدا نشد" }, 404);

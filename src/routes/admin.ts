@@ -65,9 +65,9 @@ admin.patch("/roster/:id/phone", async (c) => {
   } else {
     doctorId = crypto.randomUUID();
     await c.env.DB.prepare(
-      `INSERT INTO doctors (id, phone, full_name, official_name, roster_id,
+      `INSERT INTO doctors (id, public_id, phone, full_name, official_name, roster_id,
                             specialty_main, medical_council_number, role, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'member', 'approved')`
+       VALUES (?, lower(substr(hex(randomblob(6)), 1, 12)), ?, ?, ?, ?, ?, ?, 'member', 'approved')`
     ).bind(doctorId, phone, roster.official_name, roster.official_name, rosterId,
       roster.field || null, roster.council_number || null).run();
   }

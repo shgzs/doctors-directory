@@ -6,6 +6,7 @@ const resolve = new Hono<{ Bindings: Env }>();
 
 type DoctorLite = {
   id: string;
+  public_id: string | null;
   full_name: string;
   specialty_main: string | null;
   city: string | null;
@@ -25,7 +26,7 @@ async function findBySpecialtyAndSlug(
   if (!specialty) return null;
 
   return env.DB.prepare(
-    `SELECT id, full_name, specialty_main, city FROM doctors
+    `SELECT id, public_id, full_name, specialty_main, city FROM doctors
      WHERE specialty_id = ? AND slug = ? AND status = 'approved'`
   )
     .bind(specialty.id, doctorSlug.toLowerCase())
@@ -34,10 +35,10 @@ async function findBySpecialtyAndSlug(
 
 async function findById(env: Env, id: string): Promise<DoctorLite | null> {
   return env.DB.prepare(
-    `SELECT id, full_name, specialty_main, city FROM doctors
-     WHERE id = ? AND status = 'approved'`
+    `SELECT id, public_id, full_name, specialty_main, city FROM doctors
+     WHERE (id = ? OR public_id = ? OR medical_council_number = ?) AND status = 'approved'`
   )
-    .bind(id)
+    .bind(id, id, id)
     .first<DoctorLite>();
 }
 
@@ -46,12 +47,12 @@ async function findById(env: Env, id: string): Promise<DoctorLite | null> {
 resolve.get("/d/:id", async (c) => {
   const doctor = await findById(c.env, c.req.param("id"));
   if (!doctor) return c.json({ notFound: true }, 404);
-  return c.json({ doctor });
+  return c.redirect(`/app#/directory?doctor=${encodeURIComponent(doctor.public_id || doctor.id)}`);
 });
 resolve.get("/doctors/:id", async (c) => {
   const doctor = await findById(c.env, c.req.param("id"));
   if (!doctor) return c.json({ notFound: true }, 404);
-  return c.json({ doctor });
+  return c.redirect(`/app#/directory?doctor=${encodeURIComponent(doctor.public_id || doctor.id)}`);
 });
 
 // Pretty URLs — works two ways depending on the incoming host:
