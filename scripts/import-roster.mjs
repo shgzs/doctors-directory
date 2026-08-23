@@ -22,7 +22,7 @@ for (const row of rows) {
   const name = cleanName(row[2]);
   const ref = sourceRef(row[2]);
   const id = `roster-${ref || index}`;
-  statements.push(`INSERT OR IGNORE INTO class_roster (id, official_name, council_number, degree, field, graduation_year, source_status, source_ref) VALUES (${sql(id)}, ${sql(name)}, ${sql(row[1])}, ${sql(row[0])}, ${sql(row[3] || row[4])}, ${sql(row[5])}, ${sql(row[6])}, ${sql(ref)});`);
+  statements.push(`INSERT OR IGNORE INTO class_roster (id, official_name, student_number, degree, field, graduation_year, source_status, source_ref) VALUES (${sql(id)}, ${sql(name)}, ${sql(row[1])}, ${sql(row[0])}, ${sql(row[3] || row[4])}, ${sql(row[5])}, ${sql(row[6])}, ${sql(ref)});`);
 }
 statements.push("COMMIT;", "");
 fs.writeFileSync(output, statements.join("\n"), "utf8");

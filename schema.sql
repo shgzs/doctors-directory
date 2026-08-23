@@ -104,7 +104,11 @@ CREATE INDEX IF NOT EXISTS idx_referrals_city ON referrals(city);
 CREATE TABLE IF NOT EXISTS class_roster (
   id TEXT PRIMARY KEY,
   official_name TEXT NOT NULL,
+  student_number TEXT,
   council_number TEXT,
+  imc_guid TEXT,
+  imc_profile_url TEXT,
+  imc_photo_url TEXT,
   degree TEXT,
   field TEXT,
   graduation_year TEXT,

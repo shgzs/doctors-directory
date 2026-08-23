@@ -47,12 +47,12 @@ async function findById(env: Env, id: string): Promise<DoctorLite | null> {
 resolve.get("/d/:id", async (c) => {
   const doctor = await findById(c.env, c.req.param("id"));
   if (!doctor) return c.json({ notFound: true }, 404);
-  return c.redirect(`/app#/directory?doctor=${encodeURIComponent(doctor.public_id || doctor.id)}`);
+  return c.redirect(`/app#/profile-view/${encodeURIComponent(doctor.public_id || doctor.id)}`);
 });
 resolve.get("/doctors/:id", async (c) => {
   const doctor = await findById(c.env, c.req.param("id"));
   if (!doctor) return c.json({ notFound: true }, 404);
-  return c.redirect(`/app#/directory?doctor=${encodeURIComponent(doctor.public_id || doctor.id)}`);
+  return c.redirect(`/app#/profile-view/${encodeURIComponent(doctor.public_id || doctor.id)}`);
 });
 
 // Pretty URLs — works two ways depending on the incoming host:

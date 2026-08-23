@@ -48,9 +48,11 @@ doctors.get("/", async (c) => {
 doctors.get("/me/profile", requireAuthenticated, async (c) => {
   const auth = c.get("auth" as never) as JwtPayload;
   const doctor = await c.env.DB.prepare(
-    `SELECT id, public_id, phone, full_name, official_name, roster_id, specialty_main, city, phone_public,
-            medical_council_number, email, bio, avatar_key, card_template, status, role
-     FROM doctors WHERE id = ?`
+    `SELECT d.id, d.public_id, d.phone, d.full_name, d.official_name, d.roster_id, d.specialty_main, d.city, d.phone_public,
+            d.medical_council_number, d.email, d.bio, d.avatar_key, d.card_template, d.status, d.role,
+            r.student_number, r.council_number AS roster_council_number,
+            r.imc_guid, r.imc_profile_url, r.imc_photo_url
+     FROM doctors d LEFT JOIN class_roster r ON r.id = d.roster_id WHERE d.id = ?`
   ).bind(auth.sub).first<Record<string, unknown>>();
   if (!doctor) return c.json({ error: "پروفایل پیدا نشد" }, 404);
   // The imported/verified name is an admin-only audit field.
@@ -70,9 +72,12 @@ doctors.get("/:id", async (c) => {
   const auth = c.get("auth" as never) as JwtPayload | undefined;
 
   const doctor = await c.env.DB.prepare(
-    `SELECT id, public_id, full_name, specialty_main, city, phone_public, phone,
-            medical_council_number, email, bio, avatar_key, card_template
-     FROM doctors WHERE (id = ? OR public_id = ? OR medical_council_number = ?) AND status = 'approved'`
+    `SELECT d.id, d.public_id, d.full_name, d.specialty_main, d.city, d.phone_public, d.phone,
+            d.medical_council_number, d.email, d.bio, d.avatar_key, d.card_template,
+            r.student_number, r.council_number AS roster_council_number,
+             r.imc_guid, r.imc_profile_url, r.imc_photo_url
+     FROM doctors d LEFT JOIN class_roster r ON r.id = d.roster_id
+     WHERE (d.id = ? OR d.public_id = ? OR d.medical_council_number = ?) AND d.status = 'approved'`
   )
     .bind(id, id, id)
     .first<Record<string, unknown>>();
@@ -88,21 +93,21 @@ doctors.get("/:id", async (c) => {
     c.env.DB.prepare(
       "SELECT id, location_name, address, days_of_week FROM work_locations WHERE doctor_id = ?"
     )
-      .bind(id)
+      .bind(doctor.id)
       .all(),
     c.env.DB.prepare(
       "SELECT platform, value, visibility FROM social_links WHERE doctor_id = ?"
     )
-      .bind(id)
+      .bind(doctor.id)
       .all(),
     c.env.DB.prepare(
       "SELECT field_key, field_value, visibility FROM dynamic_fields WHERE doctor_id = ?"
     )
-      .bind(id)
+      .bind(doctor.id)
       .all(),
   ]);
 
-  const owner = auth?.sub === id;
+  const owner = auth?.sub === doctor.id;
   const filterByVisibility = <T extends { visibility: string }>(rows: T[]) =>
     owner ? rows : member ? rows.filter((r) => r.visibility !== "private") : rows.filter((r) => r.visibility === "public");
 

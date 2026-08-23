@@ -226,6 +226,7 @@ label.field{display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:va
 .contact-row:first-of-type{border-top:none;margin-top:6px}
 .contact-row .ic{width:30px;height:30px;border-radius:9px;background:var(--paper-2);display:grid;place-items:center;flex:none;font-size:14px}
 .share-row{display:flex;gap:8px;margin-top:16px}
+.public-profile-shell{max-width:1040px;margin:34px auto 60px}.public-profile-grid{display:grid;grid-template-columns:minmax(300px,390px) 1fr;gap:26px;align-items:start}.public-profile-grid .bizcard{min-height:430px}.public-profile-intro{padding:10px 0}.public-profile-intro h1{font-size:clamp(26px,4vw,40px);line-height:1.45;margin:12px 0 5px}.public-profile-intro .lead{font-size:16px;color:var(--ink-soft);margin:0 0 22px}.public-profile-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}.profile-back{display:inline-flex;align-items:center;gap:7px;color:var(--oxblood);font-weight:700;margin-bottom:18px}.official-profile{padding:14px 16px;border:1px dashed var(--brass);background:var(--brass-light);border-radius:14px;margin-top:18px}.official-profile a{color:var(--oxblood);font-weight:700}.public-profile-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:18px}.public-profile-meta div{padding:12px;border-radius:12px;background:var(--paper-2)}
 
 .detail-block{margin-bottom:22px}
 .detail-block h3{font-size:16px;color:var(--ink-soft);margin-bottom:10px;display:flex;align-items:center;gap:8px}
@@ -287,6 +288,7 @@ footer.site{padding:34px 0 60px;text-align:center;color:var(--ink-soft);font-siz
   .hero{grid-template-columns:1fr;padding-top:30px}
   .fan{height:230px;order:-1}
   .profile-layout{grid-template-columns:1fr}
+  .public-profile-grid{grid-template-columns:1fr}.public-profile-shell{margin-top:22px}.public-profile-meta{grid-template-columns:1fr}
   .form-grid{grid-template-columns:1fr}
   .tabs{order:3;width:100%;justify-content:flex-start;overflow-x:auto}
   .topbar-inner{flex-wrap:wrap}
@@ -587,7 +589,7 @@ async function openDoctorModal(id){
               \${d.specialty_main ? '<span class="stamp">' + esc(d.specialty_main) + "</span>" : ""}
               \${contactRowsHtml(d, canSeePrivate)}
               <div class="share-row">
-                <button class="btn ghost sm" style="flex:1" id="copyLinkBtn">کپی لینک پروفایل</button>
+                <a class="btn ghost sm" style="flex:1" href="\${url}">پروفایل مستقل</a>
                 <button class="btn brass sm" id="vcardBtn">افزودن مخاطب</button>
               </div>
             </div>
@@ -609,10 +611,6 @@ async function openDoctorModal(id){
       </div>\`;
     $("docClose").onclick = () => modalRoot.innerHTML = "";
     $("docBackdrop").onclick = (e) => { if (e.target.id === "docBackdrop") modalRoot.innerHTML = ""; };
-    $("copyLinkBtn").onclick = async () => {
-      try { await navigator.clipboard.writeText(url); toast("لینک کپی شد"); }
-      catch { toast("کپی خودکار ممکن نبود؛ لینک: " + url, true); }
-    };
     $("vcardBtn").onclick = () => {
       const vcf = "BEGIN:VCARD\\nVERSION:3.0\\nFN:" + d.full_name + "\\nTEL:" + (d.phone_public || d.phone || "") +
         (d.email ? "\\nEMAIL:" + d.email : "") + "\\nEND:VCARD";
@@ -634,7 +632,7 @@ async function viewRequests(){
       <button class="btn" style="margin-top:14px" id="addRequestBtn">ثبت درخواست</button>
     </div>
     <div class="grid-cards" id="requestList"><div class="empty">در حال بارگذاری…</div></div>
-    <div id="requestDetail" class="request-detail"></div>\`;
+    \`;
 
   async function load(){
     try {
@@ -643,20 +641,58 @@ async function viewRequests(){
         <article class="member-card request-card" data-request-id="\${esc(x.id)}"><h3>\${esc(x.title)}</h3>
           <div class="request-meta"><span class="stamp">\${esc([x.specialty,x.city].filter(Boolean).join(" · ") || "بدون دسته‌بندی")}</span><span class="status-pill \${x.status}">\${x.status === "answered" ? "پاسخ دارد" : x.status === "closed" ? "بسته‌شده" : "باز"}</span></div>
           <p class="muted" style="font-size:12.5px;margin-top:9px">\${esc(x.answer_count || 0)} پاسخ · از طرف \${esc(x.asked_by || "—")}</p></article>\`).join("") : '<div class="empty">هنوز درخواستی ثبت نشده.</div>';
-      $("requestList").querySelectorAll("[data-request-id]").forEach(card => card.onclick = () => openRequest(card.dataset.requestId));
-    } catch (e) { toast(e.message, true); }
-  }
-  async function openRequest(id){
-    try {
-      const x = await api("/api/recommendation-requests/" + encodeURIComponent(id));
-      $("requestDetail").innerHTML = \`<div class="card"><div class="section-head"><div><h3 style="font-size:17px">\${esc(x.title)}</h3><p class="muted">\${esc(x.details || "توضیحی ثبت نشده")}</p></div><span class="status-pill \${x.status}">\${x.answers.length ? x.answers.length + " پاسخ ثبت شده" : "هنوز پاسخی ندارد"}</span></div>
-        <div>\${x.answers.length ? x.answers.map(a => \`<div class="answer-card"><div class="answer-head"><b>\${esc(a.recommended_name)}</b><span class="muted" style="font-size:12px">پیشنهاد از \${esc(a.answered_by || "—")}</span></div><div class="muted" style="font-size:13px;margin-top:5px">\${esc([a.specialty,a.city,a.phone].filter(Boolean).join(" · "))}</div>\${a.notes ? \`<p style="font-size:13px;margin:7px 0 0">\${esc(a.notes)}</p>\` : ""}</div>\`).join("") : '<p class="muted">اولین پاسخ را شما ثبت کنید.</p>'}</div>
-        \${x.status !== "closed" ? \`<hr class="pulse-divider"><h4 style="font-size:14px">پاسخ شما</h4><div class="form-grid"><label class="field">نام پزشک یا فرد پیشنهادی<input id="ansName"></label><label class="field">تخصص<input id="ansSpecialty"></label><label class="field">شهر<input id="ansCity"></label><label class="field">شماره تماس<input id="ansPhone"></label><label class="field full">توضیح شما<textarea id="ansNotes"></textarea></label></div><button class="btn" style="margin-top:12px" id="sendAnswerBtn">ثبت پاسخ</button>\` : ""}</div>\`;
-      const send = $("sendAnswerBtn"); if (send) send.onclick = async () => { const recommendedName=$("ansName").value.trim(); if (!recommendedName) return toast("نام فرد پیشنهادی را وارد کن",true); try { await api("/api/recommendation-requests/"+encodeURIComponent(id)+"/answers",{method:"POST",body:JSON.stringify({recommendedName,specialty:$("ansSpecialty").value,city:$("ansCity").value,phone:$("ansPhone").value,notes:$("ansNotes").value})}); toast("پاسخ ثبت شد"); await load(); await openRequest(id); } catch(e){toast(e.message,true)} };
+      $("requestList").querySelectorAll("[data-request-id]").forEach(card => card.onclick = () => { location.hash = "#/request/" + encodeURIComponent(card.dataset.requestId); });
     } catch (e) { toast(e.message, true); }
   }
   $("addRequestBtn").onclick = async () => { const title=$("rqTitle").value.trim(); if (!title) return toast("متن درخواست را وارد کن",true); try { await api("/api/recommendation-requests",{method:"POST",body:JSON.stringify({title,specialty:$("rqSpecialty").value,city:$("rqCity").value,details:$("rqDetails").value})}); ["rqTitle","rqSpecialty","rqCity","rqDetails"].forEach(id=>$(id).value=""); toast("درخواست ثبت شد"); load(); } catch(e){toast(e.message,true)} };
   load();
+}
+
+async function viewRequestDetail(id){
+  if (!TOKEN) { view.innerHTML = gatedNotice("برای دیدن درخواست‌ها ابتدا وارد شو."); return; }
+  try {
+    const x = await api("/api/recommendation-requests/" + encodeURIComponent(id));
+    view.innerHTML = \`
+      <div class="public-profile-shell">
+        <a class="profile-back" href="#/requests">← بازگشت به فهرست درخواست‌ها</a>
+        <div class="section-head"><div><h2>جزئیات درخواست</h2><p class="muted">\${esc([x.specialty,x.city].filter(Boolean).join(" · ") || "درخواست معرفی")}</p></div><span class="status-pill \${x.status}">\${x.status === "answered" ? "پاسخ دارد" : x.status === "closed" ? "بسته‌شده" : "باز"}</span></div>
+        <div class="card"><h3>\${esc(x.title)}</h3><p class="muted" style="margin-top:10px">\${esc(x.details || "توضیحی ثبت نشده")}</p><p class="muted" style="font-size:12px;margin-top:12px">ثبت‌شده توسط \${esc(x.asked_by || "—")}</p></div>
+        <div class="card" style="margin-top:18px"><div class="section-head"><h3 style="font-size:17px">پاسخ‌ها</h3><span class="stamp">\${x.answers.length} پاسخ</span></div>
+          \${x.answers.length ? x.answers.map(a => \`<div class="answer-card"><div class="answer-head"><b>\${esc(a.recommended_name)}</b><span class="muted" style="font-size:12px">پیشنهاد از \${esc(a.answered_by || "—")}</span></div><div class="muted" style="font-size:13px;margin-top:5px">\${esc([a.specialty,a.city,a.phone].filter(Boolean).join(" · "))}</div>\${a.notes ? \`<p style="font-size:13px;margin:7px 0 0">\${esc(a.notes)}</p>\` : ""}</div>\`).join("") : '<p class="muted">هنوز پاسخی ثبت نشده است.</p>'}
+        </div>
+        \${x.status !== "closed" ? \`<div class="card" style="margin-top:18px"><h3 style="font-size:16px">پاسخ شما</h3><div class="form-grid" style="margin-top:12px"><label class="field">نام پزشک یا فرد پیشنهادی<input id="ansName"></label><label class="field">تخصص<input id="ansSpecialty"></label><label class="field">شهر<input id="ansCity"></label><label class="field">شماره تماس<input id="ansPhone"></label><label class="field full">توضیح شما<textarea id="ansNotes"></textarea></label></div><button class="btn" style="margin-top:12px" id="sendAnswerBtn">ثبت پاسخ</button></div>\` : ""}
+      </div>\`;
+    const send = $("sendAnswerBtn");
+    if (send) send.onclick = async () => { const recommendedName=$("ansName").value.trim(); if (!recommendedName) return toast("نام فرد پیشنهادی را وارد کن",true); try { await api("/api/recommendation-requests/"+encodeURIComponent(id)+"/answers",{method:"POST",body:JSON.stringify({recommendedName,specialty:$("ansSpecialty").value,city:$("ansCity").value,phone:$("ansPhone").value,notes:$("ansNotes").value})}); toast("پاسخ ثبت شد"); viewRequestDetail(id); } catch(e){toast(e.message,true)} };
+  } catch (e) { toast(e.message, true); view.innerHTML = '<div class="empty">درخواست پیدا نشد.</div>'; }
+}
+
+async function viewPublicProfile(key){
+  try {
+    const d = await api("/api/doctors/" + encodeURIComponent(key));
+    const officialUrl = d.imc_profile_url || (d.imc_guid ? "https://membersearch.irimc.org/member/profile?id=" + encodeURIComponent(d.imc_guid) : "");
+    view.innerHTML = \`
+      <div class="public-profile-shell">
+        <a class="profile-back" href="#/directory">← بازگشت به دفترچه همکلاسی‌ها</a>
+        <div class="public-profile-grid">
+          <div class="bizcard template-\${esc(d.card_template || "default")}">
+            <span class="seal">✓<span class="cross">+</span></span>\${avatarHtml(d, "lg")}
+            <h2>\${esc(d.full_name || "بدون نام")}</h2>\${d.specialty_main ? '<span class="stamp">' + esc(d.specialty_main) + "</span>" : ""}
+            <p class="muted">\${esc(d.city || "")}</p>\${contactRowsHtml(d, Boolean(ME))}
+            <div class="public-profile-actions"><button class="btn brass sm" id="publicVcardBtn">افزودن مخاطب</button>\${officialUrl ? '<a class="btn ghost sm" target="_blank" rel="noopener" href="' + esc(officialUrl) + '">پروفایل نظام پزشکی</a>' : ""}</div>
+          </div>
+          <div class="public-profile-intro">
+            <p class="eyebrow">کارت همکلاسی</p><h1>\${esc(d.full_name || "پروفایل پزشک")}</h1><p class="lead">\${esc(d.specialty_main || "اطلاعات حرفه‌ای و راه‌های ارتباطی")}</p>
+            \${d.bio ? '<div class="detail-block"><h3>درباره</h3><p>' + esc(d.bio) + "</p></div>" : ""}
+            <div class="detail-block"><h3>محل‌های کار</h3>\${(d.workLocations||[]).map(l => '<div class="loc-item"><b>' + esc(l.location_name) + '</b>' + (l.address ? ' — ' + esc(l.address) : '') + '</div>').join('') || '<p class="muted">ثبت نشده</p>'}</div>
+            \${(d.socialLinks||[]).length ? '<div class="detail-block"><h3>راه‌های ارتباطی</h3>' + d.socialLinks.map(s => '<div class="link-item"><b>' + esc(s.platform) + '</b> — ' + esc(s.value) + '</div>').join('') + '</div>' : ""}
+            \${(d.extraFields||[]).length ? '<div class="detail-block"><h3>اطلاعات تکمیلی</h3>' + d.extraFields.map(f => '<div class="link-item"><b>' + esc(f.field_key) + '</b> — ' + esc(f.field_value) + '</div>').join('') + '</div>' : ""}
+            <div class="official-profile"><b>اطلاعات شناسایی حرفه‌ای</b><div class="public-profile-meta"><div><small class="muted">شماره دانشجویی</small><br>\${esc(d.student_number || "—")}</div><div><small class="muted">شماره نظام پزشکی</small><br>\${esc(d.roster_council_number || d.medical_council_number || "—")}</div></div>\${officialUrl ? '<p style="margin-top:12px"><a target="_blank" rel="noopener" href="' + esc(officialUrl) + '">مشاهده صفحه رسمی در نظام پزشکی ↗</a></p>' : '<p class="muted" style="margin-top:12px">لینک رسمی نظام پزشکی هنوز ثبت نشده است.</p>'}</div>
+          </div>
+        </div>
+      </div>\`;
+    $("publicVcardBtn").onclick = () => { const vcf = "BEGIN:VCARD\\nVERSION:3.0\\nFN:" + d.full_name + "\\nTEL:" + (d.phone_public || d.phone || "") + (d.email ? "\\nEMAIL:" + d.email : "") + "\\nEND:VCARD"; const blob = new Blob([vcf], {type:"text/vcard"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=(d.full_name||"doctor")+".vcf"; a.click(); };
+  } catch (e) { view.innerHTML = '<div class="empty">پروفایل پیدا نشد.</div>'; toast(e.message, true); }
 }
 
 async function viewReferrals(){
@@ -904,7 +940,7 @@ async function viewAdmin(){
     </div>
     <div class="admin-table"><table id="adminTable"><thead><tr><th>نام</th><th>نام اصلی</th><th>شماره</th><th>وضعیت</th><th>نقش</th><th>عملیات</th></tr></thead><tbody></tbody></table></div>
     <div class="section-head" style="margin-top:30px"><h3 style="font-size:15px">فهرست همکلاسی‌ها و شماره موبایل</h3><input type="search" id="rosterSearch" placeholder="جست‌وجوی نام یا شماره…" style="width:240px"></div>
-    <div class="admin-table"><table id="rosterTable"><thead><tr><th>نام اصلی</th><th>رشته</th><th>شماره نظام</th><th>موبایل</th><th>عملیات</th></tr></thead><tbody></tbody></table></div>\`;
+    <div class="admin-table"><table id="rosterTable"><thead><tr><th>نام اصلی</th><th>رشته</th><th>شماره دانشجویی</th><th>شماره نظام</th><th>موبایل</th><th>عملیات</th></tr></thead><tbody></tbody></table></div>\`;
 
   async function loadPending(){
     try {
@@ -949,7 +985,7 @@ async function viewAdmin(){
   }
   $("adminSearch").onkeydown = (e) => { if (e.key === "Enter") loadTable(); };
   $("adminStatus").onchange = loadTable;
-  async function loadRoster(){ try { const q=$("rosterSearch").value.trim(); const d=await api("/api/admin/roster"+(q?"?q="+encodeURIComponent(q):"")); document.querySelector("#rosterTable tbody").innerHTML=d.roster.map(x=>\`<tr><td>\${esc(x.official_name)}</td><td>\${esc(x.field||"—")}</td><td>\${esc(x.council_number||"—")}</td><td>\${esc(x.phone||"—")}</td><td><button class="btn sm ghost" data-roster-phone="\${esc(x.id)}">\${x.phone?"تغییر شماره":"ثبت شماره"}</button></td></tr>\`).join(""); $("rosterTable").querySelectorAll("[data-roster-phone]").forEach(b=>b.onclick=async()=>{const phone=prompt("شماره موبایل را وارد کنید:");if(!phone)return;try{await api("/api/admin/roster/"+encodeURIComponent(b.dataset.rosterPhone)+"/phone",{method:"PATCH",body:JSON.stringify({phone})});toast("شماره ذخیره شد");loadRoster();loadTable()}catch(e){toast(e.message,true)}}); } catch(e){toast(e.message,true)} }
+  async function loadRoster(){ try { const q=$("rosterSearch").value.trim(); const d=await api("/api/admin/roster"+(q?"?q="+encodeURIComponent(q):"")); document.querySelector("#rosterTable tbody").innerHTML=d.roster.map(x=>\`<tr><td>\${esc(x.official_name)}</td><td>\${esc(x.field||"—")}</td><td>\${esc(x.student_number||"—")}</td><td>\${esc(x.council_number||"—")}</td><td>\${esc(x.phone||"—")}</td><td><button class="btn sm ghost" data-roster-phone="\${esc(x.id)}">\${x.phone?"تغییر شماره":"ثبت شماره"}</button><button class="btn sm ghost" data-roster-imc="\${esc(x.id)}">ویرایش نظام</button></td></tr>\`).join(""); $("rosterTable").querySelectorAll("[data-roster-phone]").forEach(b=>b.onclick=async()=>{const phone=prompt("شماره موبایل را وارد کنید:");if(!phone)return;try{await api("/api/admin/roster/"+encodeURIComponent(b.dataset.rosterPhone)+"/phone",{method:"PATCH",body:JSON.stringify({phone})});toast("شماره ذخیره شد");loadRoster();loadTable()}catch(e){toast(e.message,true)}}); $("rosterTable").querySelectorAll("[data-roster-imc]").forEach(b=>b.onclick=async()=>{const x=d.roster.find(r=>String(r.id)===String(b.dataset.rosterImc)); const studentNumber=prompt("شماره دانشجویی:",x.student_number||""); if(studentNumber===null)return; const councilNumber=prompt("شماره نظام پزشکی:",x.council_number||""); if(councilNumber===null)return; const imcGuid=prompt("GUID نظام پزشکی (اختیاری):",x.imc_guid||""); if(imcGuid===null)return; try{await api("/api/admin/roster/"+encodeURIComponent(x.id)+"/imc",{method:"PATCH",body:JSON.stringify({studentNumber,councilNumber,imcGuid})});toast("اطلاعات نظام پزشکی ذخیره شد");loadRoster();loadTable()}catch(e){toast(e.message,true)}}); } catch(e){toast(e.message,true)} }
   $("rosterSearch").onkeydown=e=>{if(e.key==="Enter")loadRoster()};
   loadPending(); loadTable(); loadRoster();
 }
@@ -967,7 +1003,9 @@ async function renderRoute(){
   renderChrome();
   if (path === "home" || path === "") return viewHome();
   if (path === "directory") return viewDirectory();
+  if (path.startsWith("profile-view/")) return viewPublicProfile(decodeURIComponent(path.slice("profile-view/".length)));
   if (path === "requests") return viewRequests();
+  if (path.startsWith("request/")) return viewRequestDetail(decodeURIComponent(path.slice("request/".length)));
   if (path === "referrals") return viewReferrals();
   if (path === "profile") return viewProfile();
   if (path === "admin") return viewAdmin();

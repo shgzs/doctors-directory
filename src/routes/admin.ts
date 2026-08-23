@@ -32,11 +32,12 @@ admin.get("/doctors", async (c) => {
 // GET /api/admin/roster — the imported class list, including unlinked people.
 admin.get("/roster", async (c) => {
   const { q } = c.req.query();
-  let sql = `SELECT id, official_name, council_number, degree, field,
+  let sql = `SELECT id, official_name, student_number, council_number, degree, field,
+                    imc_guid, imc_profile_url, imc_photo_url,
                     graduation_year, phone, doctor_id, updated_at
              FROM class_roster WHERE 1=1`;
   const binds: string[] = [];
-  if (q) { sql += " AND (official_name LIKE ? OR council_number LIKE ? OR phone LIKE ?)"; binds.push(`%${q}%`, `%${q}%`, `%${q}%`); }
+  if (q) { sql += " AND (official_name LIKE ? OR student_number LIKE ? OR council_number LIKE ? OR imc_guid LIKE ? OR phone LIKE ?)"; binds.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`); }
   sql += " ORDER BY official_name ASC LIMIT 500";
   const { results } = await c.env.DB.prepare(sql).bind(...binds).all();
   return c.json({ roster: results });
@@ -56,7 +57,7 @@ admin.patch("/roster/:id/phone", async (c) => {
 
   const used = await c.env.DB.prepare("SELECT id FROM doctors WHERE phone = ?")
     .bind(phone).first<{ id: string }>();
-  if (used && used.id !== roster.doctor_id) return c.json({ error: "این شماره قبلاً برای فرد دیگری ثبت شده است" }, 409);
+if (used && used.id !== roster.doctor_id) return c.json({ error: "این شماره قبلاً برای فرد دیگری ثبت شده است" }, 409);
 
   let doctorId = roster.doctor_id as string | null;
   if (doctorId) {
@@ -75,6 +76,43 @@ admin.patch("/roster/:id/phone", async (c) => {
   await c.env.DB.prepare("UPDATE class_roster SET phone = ?, doctor_id = ?, updated_at = datetime('now') WHERE id = ?")
     .bind(phone, doctorId, rosterId).run();
   return c.json({ ok: true, doctorId, phone });
+});
+
+// PATCH /api/admin/roster/:id/imc — add official medical council identity data.
+admin.patch("/roster/:id/imc", async (c) => {
+  const rosterId = c.req.param("id");
+  const body = await c.req.json<{
+    studentNumber?: string;
+    councilNumber?: string;
+    imcGuid?: string;
+    imcProfileUrl?: string;
+    imcPhotoUrl?: string;
+  }>();
+  const roster = await c.env.DB.prepare("SELECT * FROM class_roster WHERE id = ?")
+    .bind(rosterId).first<Record<string, any>>();
+  if (!roster) return c.json({ error: "فرد موردنظر پیدا نشد" }, 404);
+
+  const guid = body.imcGuid?.trim() || null;
+  if (guid && !/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(guid)) {
+    return c.json({ error: "شناسه نظام پزشکی باید به شکل GUID باشد" }, 400);
+  }
+  const profileUrl = body.imcProfileUrl?.trim() || (guid ? `https://membersearch.irimc.org/member/profile?id=${guid}` : null);
+  await c.env.DB.prepare(
+    `UPDATE class_roster SET student_number = ?, council_number = ?, imc_guid = ?,
+       imc_profile_url = ?, imc_photo_url = ?, updated_at = datetime('now') WHERE id = ?`
+  ).bind(
+    body.studentNumber?.trim() || null,
+    body.councilNumber?.trim() || null,
+    guid,
+    profileUrl,
+    body.imcPhotoUrl?.trim() || null,
+    rosterId
+  ).run();
+  if (roster.doctor_id) {
+    await c.env.DB.prepare("UPDATE doctors SET medical_council_number = ?, updated_at = datetime('now') WHERE id = ?")
+      .bind(body.councilNumber?.trim() || null, roster.doctor_id).run();
+  }
+  return c.json({ ok: true, imcProfileUrl: profileUrl });
 });
 
 // POST /api/admin/approve/:id
