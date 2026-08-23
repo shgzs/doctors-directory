@@ -226,7 +226,7 @@ label.field{display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:va
 .contact-row:first-of-type{border-top:none;margin-top:6px}
 .contact-row .ic{width:30px;height:30px;border-radius:9px;background:var(--paper-2);display:grid;place-items:center;flex:none;font-size:14px}
 .share-row{display:flex;gap:8px;margin-top:16px}
-.public-profile-shell{max-width:1040px;margin:34px auto 60px}.public-profile-grid{display:grid;grid-template-columns:minmax(300px,390px) 1fr;gap:26px;align-items:start}.public-profile-grid .bizcard{min-height:430px}.public-profile-intro{padding:10px 0}.public-profile-intro h1{font-size:clamp(26px,4vw,40px);line-height:1.45;margin:12px 0 5px}.public-profile-intro .lead{font-size:16px;color:var(--ink-soft);margin:0 0 22px}.public-profile-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px}.profile-back{display:inline-flex;align-items:center;gap:7px;color:var(--oxblood);font-weight:700;margin-bottom:18px}.official-profile{padding:14px 16px;border:1px dashed var(--brass);background:var(--brass-light);border-radius:14px;margin-top:18px}.official-profile a{color:var(--oxblood);font-weight:700}.public-profile-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:18px}.public-profile-meta div{padding:12px;border-radius:12px;background:var(--paper-2)}
+.public-profile-shell{max-width:1040px;margin:34px auto 60px}.doctor-card-page{display:grid;grid-template-columns:minmax(350px,470px) 1fr;gap:34px;align-items:start}.doctor-business-card{min-height:520px;padding:34px 30px;border-radius:24px;background:linear-gradient(145deg,#fffdf7 0%,#f4e4c8 100%);border:1px solid #d9bf84;box-shadow:0 18px 50px #62431f18}.doctor-business-card::before{content:"پزشکان دورهمی";display:block;text-align:right;font-size:11px;letter-spacing:.08em;color:var(--ink-soft);margin-bottom:20px}.doctor-business-card .avatar{width:156px;height:156px;font-size:42px;border:7px solid #fffaf0;box-shadow:0 7px 22px #62431f20}.doctor-business-card h2{font-size:26px;margin-top:14px}.doctor-business-card .stamp{font-size:14px;padding:6px 14px}.doctor-card-details{padding:12px 0}.doctor-card-details h1{font-size:clamp(26px,4vw,40px);line-height:1.45;margin:12px 0 5px}.doctor-card-details .lead{font-size:16px;color:var(--ink-soft);margin:0 0 22px}.public-profile-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:22px}.profile-back{display:inline-flex;align-items:center;gap:7px;color:var(--oxblood);font-weight:700;margin-bottom:18px}.official-profile{padding:14px 16px;border:1px dashed var(--brass);background:var(--brass-light);border-radius:14px;margin-top:18px}.official-profile a{color:var(--oxblood);font-weight:700}.public-profile-meta{display:grid;grid-template-columns:1fr;gap:10px;margin-top:18px}.public-profile-meta div{padding:12px;border-radius:12px;background:var(--paper-2)}
 
 .detail-block{margin-bottom:22px}
 .detail-block h3{font-size:16px;color:var(--ink-soft);margin-bottom:10px;display:flex;align-items:center;gap:8px}
@@ -288,7 +288,7 @@ footer.site{padding:34px 0 60px;text-align:center;color:var(--ink-soft);font-siz
   .hero{grid-template-columns:1fr;padding-top:30px}
   .fan{height:230px;order:-1}
   .profile-layout{grid-template-columns:1fr}
-  .public-profile-grid{grid-template-columns:1fr}.public-profile-shell{margin-top:22px}.public-profile-meta{grid-template-columns:1fr}
+  .doctor-card-page{grid-template-columns:1fr}.public-profile-shell{margin-top:22px}.doctor-business-card{min-height:0}.doctor-business-card .avatar{width:132px;height:132px}
   .form-grid{grid-template-columns:1fr}
   .tabs{order:3;width:100%;justify-content:flex-start;overflow-x:auto}
   .topbar-inner{flex-wrap:wrap}
@@ -674,20 +674,20 @@ async function viewPublicProfile(key){
     view.innerHTML = \`
       <div class="public-profile-shell">
         <a class="profile-back" href="#/directory">← بازگشت به دفترچه همکلاسی‌ها</a>
-        <div class="public-profile-grid">
-          <div class="bizcard template-\${esc(d.card_template || "default")}">
+        <div class="doctor-card-page">
+          <div class="bizcard doctor-business-card template-\${esc(d.card_template || "default")}">
             <span class="seal">✓<span class="cross">+</span></span>\${avatarHtml(d, "lg")}
             <h2>\${esc(d.full_name || "بدون نام")}</h2>\${d.specialty_main ? '<span class="stamp">' + esc(d.specialty_main) + "</span>" : ""}
             <p class="muted">\${esc(d.city || "")}</p>\${contactRowsHtml(d, Boolean(ME))}
             <div class="public-profile-actions"><button class="btn brass sm" id="publicVcardBtn">افزودن مخاطب</button>\${officialUrl ? '<a class="btn ghost sm" target="_blank" rel="noopener" href="' + esc(officialUrl) + '">پروفایل نظام پزشکی</a>' : ""}</div>
           </div>
-          <div class="public-profile-intro">
+          <div class="doctor-card-details">
             <p class="eyebrow">کارت همکلاسی</p><h1>\${esc(d.full_name || "پروفایل پزشک")}</h1><p class="lead">\${esc(d.specialty_main || "اطلاعات حرفه‌ای و راه‌های ارتباطی")}</p>
             \${d.bio ? '<div class="detail-block"><h3>درباره</h3><p>' + esc(d.bio) + "</p></div>" : ""}
             <div class="detail-block"><h3>محل‌های کار</h3>\${(d.workLocations||[]).map(l => '<div class="loc-item"><b>' + esc(l.location_name) + '</b>' + (l.address ? ' — ' + esc(l.address) : '') + '</div>').join('') || '<p class="muted">ثبت نشده</p>'}</div>
             \${(d.socialLinks||[]).length ? '<div class="detail-block"><h3>راه‌های ارتباطی</h3>' + d.socialLinks.map(s => '<div class="link-item"><b>' + esc(s.platform) + '</b> — ' + esc(s.value) + '</div>').join('') + '</div>' : ""}
             \${(d.extraFields||[]).length ? '<div class="detail-block"><h3>اطلاعات تکمیلی</h3>' + d.extraFields.map(f => '<div class="link-item"><b>' + esc(f.field_key) + '</b> — ' + esc(f.field_value) + '</div>').join('') + '</div>' : ""}
-            <div class="official-profile"><b>اطلاعات شناسایی حرفه‌ای</b><div class="public-profile-meta"><div><small class="muted">شماره دانشجویی</small><br>\${esc(d.student_number || "—")}</div><div><small class="muted">شماره نظام پزشکی</small><br>\${esc(d.roster_council_number || d.medical_council_number || "—")}</div></div>\${officialUrl ? '<p style="margin-top:12px"><a target="_blank" rel="noopener" href="' + esc(officialUrl) + '">مشاهده صفحه رسمی در نظام پزشکی ↗</a></p>' : '<p class="muted" style="margin-top:12px">لینک رسمی نظام پزشکی هنوز ثبت نشده است.</p>'}</div>
+            <div class="official-profile"><b>شناسه حرفه‌ای</b><div class="public-profile-meta"><div><small class="muted">شماره نظام پزشکی</small><br>\${esc(d.roster_council_number || d.medical_council_number || "—")}</div></div>\${officialUrl ? '<p style="margin-top:12px"><a target="_blank" rel="noopener" href="' + esc(officialUrl) + '">مشاهده صفحه رسمی در نظام پزشکی ↗</a></p>' : '<p class="muted" style="margin-top:12px">لینک رسمی نظام پزشکی هنوز ثبت نشده است.</p>'}</div>
           </div>
         </div>
       </div>\`;
