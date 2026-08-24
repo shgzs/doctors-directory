@@ -369,9 +369,9 @@ function socialLinkHtml(s){
   const value = String(s.value || "").trim();
   let href = value;
   let cls = "website", glyph = "↗";
-  if (key.includes("instagram") || key.includes("اینست")) { cls = "instagram"; glyph = "◎"; if (!/^https?:\/\//i.test(href)) href = "https://instagram.com/" + href.replace(/^@/, ""); }
-  else if (key.includes("telegram") || key.includes("تلگرام")) { cls = "telegram"; glyph = "➤"; if (!/^https?:\/\//i.test(href)) href = "https://t.me/" + href.replace(/^@/, ""); }
-  else if (key.includes("whatsapp") || key.includes("واتساپ")) { cls = "whatsapp"; glyph = "◉"; if (!/^https?:\/\//i.test(href)) href = "https://wa.me/" + displayPhone(href).replace(/^0/, "98"); }
+  if (key.includes("instagram") || key.includes("اینست")) { cls = "instagram"; glyph = "◎"; if (!/^https?:\\/\\//i.test(href)) href = "https://instagram.com/" + href.replace(/^@/, ""); }
+  else if (key.includes("telegram") || key.includes("تلگرام")) { cls = "telegram"; glyph = "➤"; if (!/^https?:\\/\\//i.test(href)) href = "https://t.me/" + href.replace(/^@/, ""); }
+  else if (key.includes("whatsapp") || key.includes("واتساپ")) { cls = "whatsapp"; glyph = "◉"; if (!/^https?:\\/\\//i.test(href)) href = "https://wa.me/" + displayPhone(href).replace(/^0/, "98"); }
   else if (key.includes("linkedin") || key.includes("لینکدین")) { cls = "linkedin"; glyph = "in"; }
   return '<a class="social-link" href="' + esc(href) + '" target="_blank" rel="noopener noreferrer"><span class="social-icon ' + cls + '">' + glyph + '</span><span>' + esc(platform) + '</span></a>';
 }
