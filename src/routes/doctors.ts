@@ -60,12 +60,13 @@ doctors.get("/me/profile", requireAuthenticated, async (c) => {
   if (!doctor) return c.json({ error: "پروفایل پیدا نشد" }, 404);
   // The imported/verified name is an admin-only audit field.
   delete doctor.official_name;
-  const [locations, social, extra] = await Promise.all([
+  const [locations, social, extra, photos] = await Promise.all([
     c.env.DB.prepare("SELECT id, location_name, address, days_of_week FROM work_locations WHERE doctor_id = ?").bind(auth.sub).all(),
     c.env.DB.prepare("SELECT id, platform, value, visibility FROM social_links WHERE doctor_id = ?").bind(auth.sub).all(),
     c.env.DB.prepare("SELECT id, field_key, field_value, visibility FROM dynamic_fields WHERE doctor_id = ?").bind(auth.sub).all(),
+    c.env.DB.prepare("SELECT id, asset_key, caption, is_primary FROM doctor_photos WHERE doctor_id = ? ORDER BY sort_order, created_at").bind(auth.sub).all(),
   ]);
-  return c.json({ ...doctor, workLocations: locations.results, socialLinks: social.results, extraFields: extra.results });
+  return c.json({ ...doctor, workLocations: locations.results, socialLinks: social.results, extraFields: extra.results, photos: photos.results });
 });
 
 // GET /api/doctors/:id
@@ -94,7 +95,7 @@ doctors.get("/:id", async (c) => {
     delete doctor.email;
   }
 
-  const [locations, social, extra] = await Promise.all([
+  const [locations, social, extra, photos] = await Promise.all([
     c.env.DB.prepare(
       "SELECT id, location_name, address, days_of_week FROM work_locations WHERE doctor_id = ?"
     )
@@ -110,6 +111,9 @@ doctors.get("/:id", async (c) => {
     )
       .bind(doctor.id)
       .all(),
+    c.env.DB.prepare("SELECT id, asset_key, caption, is_primary FROM doctor_photos WHERE doctor_id = ? ORDER BY sort_order, created_at")
+      .bind(doctor.id)
+      .all(),
   ]);
 
   const owner = auth?.sub === doctor.id;
@@ -121,6 +125,7 @@ doctors.get("/:id", async (c) => {
     workLocations: locations.results,
     socialLinks: filterByVisibility(social.results as any),
     extraFields: filterByVisibility(extra.results as any),
+    photos: photos.results,
   });
 });
 

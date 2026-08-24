@@ -203,6 +203,7 @@ label.field{display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:va
   padding:18px;text-align:right;transition:.18s;position:relative;overflow:hidden;
 }
 .member-card:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.profile-gallery{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.profile-gallery img{width:68px;height:68px;object-fit:cover;border-radius:10px;border:2px solid var(--line)}.profile-gallery img.primary{border-color:var(--brass);box-shadow:0 0 0 2px var(--brass-light)}.photo-manager{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:12px}.photo-manager small{color:var(--ink-soft)}
 .member-card .top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
 .avatar{border-radius:50%;object-fit:cover;flex:none;display:grid;place-items:center;font-weight:700;color:#fff}
 .avatar.md{width:52px;height:52px;font-size:17px}
@@ -381,6 +382,10 @@ function avatarHtml(doctor, size){
     return '<img class="' + cls + '" src="/api/assets/' + encodeURIComponent(doctor.avatar_key) + '" alt="' + esc(doctor.full_name) + '">';
   }
   return '<div class="' + cls + '" style="background:' + tintFor(doctor.full_name) + '">' + esc(initials(doctor.full_name)) + "</div>";
+}
+function photoGalleryHtml(photos){
+  if (!photos || !photos.length) return "";
+  return '<div class="profile-gallery">' + photos.map(p => '<img class="' + (p.is_primary ? 'primary' : '') + '" src="/api/assets/' + encodeURIComponent(p.asset_key) + '" alt="عکس پروفایل">').join('') + '</div>';
 }
 
 const DAYS = [
@@ -608,6 +613,7 @@ async function openDoctorModal(id){
               <h2>\${esc(d.full_name)}</h2>
               \${d.specialty_main ? '<span class="stamp">' + esc(d.specialty_main) + "</span>" : ""}
               \${contactRowsHtml(d, canSeePrivate)}
+              \${photoGalleryHtml(d.photos)}
               <div class="share-row">
                 <a class="btn ghost sm" style="flex:1" href="\${url}">مشاهده صفحه</a>
                 <button class="btn brass sm" id="vcardBtn">ذخیره شماره</button>
@@ -622,7 +628,7 @@ async function openDoctorModal(id){
                 \`).join("") || '<p class="muted">ثبت نشده</p>'}
               </div>
               <div class="detail-block"><h3>شبکه‌های اجتماعی</h3>
-                \${(d.socialLinks||[]).map(s => '<div class="link-item"><b>' + esc(s.platform) + "</b> — " + esc(s.value) + "</div>").join("") || '<p class="muted">ثبت نشده</p>'}
+                \${(d.socialLinks||[]).map(s => socialLinkHtml(s)).join("") || '<p class="muted">ثبت نشده</p>'}
               </div>
               \${(d.extraFields||[]).length ? '<div class="detail-block"><h3>اطلاعات تکمیلی</h3>' + d.extraFields.map(f => '<div class="link-item"><b>' + esc(f.field_key) + "</b> — " + esc(f.field_value) + "</div>").join("") + "</div>" : ""}
             </div>
@@ -696,7 +702,7 @@ async function viewPublicProfile(key){
         <a class="profile-back" href="#/directory">← بازگشت به دفترچه همکلاسی‌ها</a>
         <div class="doctor-card-page">
           <div class="bizcard doctor-business-card template-\${esc(d.card_template || "default")}">
-            <span class="seal">✓<span class="cross">+</span></span>\${avatarHtml(d, "lg")}
+            <span class="seal">✓<span class="cross">+</span></span>\${avatarHtml(d, "lg")}\${photoGalleryHtml(d.photos)}
             <h2>\${esc(d.full_name || "بدون نام")}</h2>\${d.specialty_main ? '<span class="stamp">' + esc(d.specialty_main) + "</span>" : ""}
             <p class="muted">\${esc(d.city || "")}</p>\${contactRowsHtml(d, Boolean(ME))}
             <div class="public-profile-actions"><button class="btn brass sm" id="publicVcardBtn">ذخیره شماره</button><a class="btn ghost sm" href="#/card/\${encodeURIComponent(d.public_id || d.id)}">کارت ویزیت قابل چاپ</a>\${officialUrl ? '<a class="btn ghost sm" target="_blank" rel="noopener" href="' + esc(officialUrl) + '">نظام پزشکی</a>' : ""}</div>
@@ -808,6 +814,7 @@ async function viewProfile(){
           <p class="muted" style="font-size:12.5px;margin:6px 0 0">JPG یا PNG، حداکثر ۳ مگابایت</p>
         </div>
       </div>
+      <div class="photo-manager"><label class="btn sm ghost" for="photoFiles">افزودن عکس به گالری</label><input type="file" id="photoFiles" accept="image/png,image/jpeg,image/webp" multiple style="display:none"><small>یکی از عکس‌ها اصلی است و بقیه در صفحه پروفایل دیده می‌شوند.</small></div><div id="photoManagerList"></div>
       <div class="form-grid">
         <label class="field">نام نمایشی<input type="text" id="pfName" value="\${esc(d.full_name||"")}"><div class="identity-note">این نام روی کارت شما نمایش داده می‌شود. نام ثبت‌شده‌ی اولیه فقط برای مدیر قابل مشاهده است.</div></label>
         <label class="field">تخصص<input type="text" id="pfSpecialty" value="\${esc(d.specialty_main||"")}"></label>
@@ -881,6 +888,20 @@ async function viewProfile(){
     } catch (e) { toast(e.message, true); }
   };
 
+  $("photoFiles").onchange = async () => {
+    const files = Array.from($("photoFiles").files || []); if (!files.length) return;
+    try {
+      for (const f of files) { const form = new FormData(); form.append("file", f); const res = await fetch("/api/doctors/me/photos", { method: "POST", headers: { Authorization: "Bearer " + TOKEN }, body: form }); const dd = await res.json(); if (!res.ok) throw new Error(dd.error || "آپلود عکس ناموفق بود"); }
+      toast("عکس‌ها به گالری اضافه شدند"); await loadMe(); renderRoute();
+    } catch (e) { toast(e.message, true); }
+  };
+
+  function renderPhotos(){
+    $("photoManagerList").innerHTML = (ME.photos||[]).map(p => '<div class="item-row"><div style="display:flex;align-items:center;gap:9px"><img src="/api/assets/' + encodeURIComponent(p.asset_key) + '" style="width:48px;height:48px;object-fit:cover;border-radius:8px"><span>' + (p.is_primary ? 'عکس اصلی' : 'عکس گالری') + '</span></div><div style="display:flex;gap:6px">' + (!p.is_primary ? '<button class="btn ghost sm" data-photo-primary="' + p.id + '">اصلی کردن</button>' : '') + '<button class="btn danger sm" data-photo-delete="' + p.id + '">حذف</button></div></div>').join('') || '<p class="muted" style="font-size:12px;margin-top:10px">هنوز عکسی به گالری اضافه نشده.</p>';
+    $("photoManagerList").querySelectorAll("[data-photo-primary]").forEach(b => b.onclick = async () => { try { await api("/api/doctors/me/photos/" + b.dataset.photoPrimary + "/primary", {method:"PATCH"}); await loadMe(); renderPhotos(); toast("عکس اصلی تغییر کرد"); } catch(e){toast(e.message,true)} });
+    $("photoManagerList").querySelectorAll("[data-photo-delete]").forEach(b => b.onclick = async () => { if(!confirm("این عکس حذف شود؟")) return; try { await api("/api/doctors/me/photos/" + b.dataset.photoDelete, {method:"DELETE"}); await loadMe(); renderPhotos(); toast("عکس حذف شد"); } catch(e){toast(e.message,true)} });
+  }
+
   $("saveProfileBtn").onclick = async () => {
     try {
       await api("/api/doctors/me/profile", { method: "PUT", body: JSON.stringify({
@@ -923,6 +944,7 @@ async function viewProfile(){
     const existing = (ME.socialLinks || []).find(s => String(s.platform).toLowerCase() === btn.dataset.platform.toLowerCase());
     $("socPlatform").value = btn.dataset.platform;
     $("socValue").value = existing ? existing.value : "";
+    $("socVis").value = existing?.visibility || "public";
     $("socValue").focus();
   });
   $("extraPresets").querySelectorAll("[data-field-key]").forEach(btn => btn.onclick = () => {
@@ -931,7 +953,7 @@ async function viewProfile(){
     $("fldValue").value = existing ? existing.field_value : "";
     $("fldValue").focus();
   });
-  renderLoc(); renderSoc(); renderFld();
+  renderLoc(); renderSoc(); renderFld(); renderPhotos();
 
   $("addLocBtn").onclick = async () => {
     const locationName = $("locName").value.trim();
