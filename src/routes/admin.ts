@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { Env } from "../types";
 import { requireAdmin } from "../lib/middleware";
 import { normalizePhone } from "../lib/phone";
+import { normalizePersianSearch, persianSearchSql } from "../lib/persian-text";
 
 const admin = new Hono<{ Bindings: Env }>();
 admin.use("*", requireAdmin);
@@ -23,7 +24,7 @@ admin.get("/doctors", async (c) => {
              FROM doctors WHERE 1=1`;
   const binds: string[] = [];
   if (status) { sql += " AND status = ?"; binds.push(status); }
-  if (q) { sql += " AND (full_name LIKE ? OR phone LIKE ? OR city LIKE ?)"; binds.push(`%${q}%`, `%${q}%`, `%${q}%`); }
+  if (q) { sql += ` AND (${persianSearchSql("full_name")} LIKE ? OR phone LIKE ? OR ${persianSearchSql("city")} LIKE ?)`; const search = normalizePersianSearch(q); binds.push(`%${search}%`, `%${q}%`, `%${search}%`); }
   sql += " ORDER BY created_at DESC LIMIT 500";
   const { results } = await c.env.DB.prepare(sql).bind(...binds).all();
   return c.json({ doctors: results });
@@ -37,7 +38,7 @@ admin.get("/roster", async (c) => {
                     graduation_year, phone, doctor_id, updated_at
              FROM class_roster WHERE 1=1`;
   const binds: string[] = [];
-  if (q) { sql += " AND (official_name LIKE ? OR student_number LIKE ? OR council_number LIKE ? OR imc_guid LIKE ? OR phone LIKE ?)"; binds.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`); }
+  if (q) { sql += ` AND (${persianSearchSql("official_name")} LIKE ? OR student_number LIKE ? OR council_number LIKE ? OR imc_guid LIKE ? OR phone LIKE ?)`; const search = normalizePersianSearch(q); binds.push(`%${search}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`); }
   sql += " ORDER BY official_name ASC LIMIT 500";
   const { results } = await c.env.DB.prepare(sql).bind(...binds).all();
   return c.json({ roster: results });

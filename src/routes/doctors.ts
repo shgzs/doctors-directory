@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { Env, JwtPayload } from "../types";
 import { requireApprovedMember, requireAuthenticated } from "../lib/middleware";
+import { normalizePersianSearch, persianSearchSql } from "../lib/persian-text";
 
 const doctors = new Hono<{ Bindings: Env }>();
 
@@ -30,8 +31,8 @@ doctors.get("/", async (c) => {
     binds.push(`%${city}%`);
   }
   if (q) {
-    sql += " AND full_name LIKE ?";
-    binds.push(`%${q}%`);
+    sql += ` AND ${persianSearchSql("full_name")} LIKE ?`;
+    binds.push(`%${normalizePersianSearch(q)}%`);
   }
   sql += " ORDER BY full_name ASC LIMIT 200";
 

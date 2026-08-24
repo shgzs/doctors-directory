@@ -6,9 +6,10 @@ const rows = JSON.parse(fs.readFileSync(input, "utf8"));
 const remoteMode = process.argv.includes("--remote");
 
 const sql = (value) => value == null || value === "" ? "NULL" : `'${String(value).replaceAll("'", "''")}'`;
+const normalizePersian = (value = "") => String(value).normalize("NFKC").replace(/ي/g, "ی").replace(/ى/g, "ی").replace(/ك/g, "ک").replace(/ـ/g, "").replace(/[\u200c\u200d]/g, " ").replace(/\s+/g, " ").trim();
 const cleanName = (html = "") => {
   const match = String(html).match(/>([^<]*)<\/a>/i);
-  return (match ? match[1] : html).replace(/<[^>]+>/g, "").trim();
+  return normalizePersian((match ? match[1] : html).replace(/<[^>]+>/g, ""));
 };
 const sourceRef = (html = "") => String(html).match(/[?&]sid=([^&\"]+)/i)?.[1] || null;
 
