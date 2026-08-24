@@ -244,6 +244,7 @@ label.field{display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:va
 .avatar-upload{display:flex;align-items:center;gap:16px;margin-bottom:22px}
 .avatar-upload .avatar{width:84px;height:84px;font-size:26px;position:relative}
 .profile-tools{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}.qr-box{display:flex;align-items:center;gap:10px;color:var(--ink-soft);font-size:12px}.qr-box img{width:92px;height:92px;object-fit:contain;border:1px solid var(--line);border-radius:10px;background:#fff}
+.roster-picker{position:relative}.roster-suggestions{position:absolute;z-index:20;top:calc(100% + 4px);right:0;left:0;display:grid;gap:4px;padding:6px;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 28px #2b21151f}.roster-suggestions[hidden]{display:none}.roster-suggestion{display:flex;justify-content:space-between;gap:12px;padding:8px 10px;border:0;border-radius:8px;background:transparent;color:var(--ink);font:inherit;text-align:right;cursor:pointer}.roster-suggestion:hover{background:var(--paper-2)}.roster-suggestion small{color:var(--ink-soft);white-space:nowrap}
 .photo-manager-list .item-row .photo-actions{opacity:0;pointer-events:none;transition:opacity .15s ease}.photo-manager-list .item-row:hover .photo-actions,.photo-manager-list .item-row:focus-within .photo-actions{opacity:1;pointer-events:auto}
 .status-banner{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;margin-bottom:22px}
 .status-banner.pending{background:#fbe9d0;border:1px solid #e9c98a}
@@ -877,7 +878,7 @@ async function viewProfile(){
       </div>
       <div class="photo-manager"><input type="file" id="photoFiles" accept="image/png,image/jpeg,image/webp" multiple style="display:none"><small>یکی از عکس‌ها اصلی است و بقیه در صفحه پروفایل دیده می‌شوند.</small></div><div id="photoManagerList" class="photo-manager-list"></div>
       <div class="form-grid">
-        <label class="field">نام نمایشی<input type="text" id="pfName" value="\${esc(d.full_name||"")}"><div class="identity-note">این نام روی کارت شما نمایش داده می‌شود. نام ثبت‌شده‌ی اولیه فقط برای مدیر قابل مشاهده است.</div></label>
+        <label class="field roster-picker">نام نمایشی<input type="text" id="pfName" autocomplete="off" value="\${esc(d.full_name||"")}"><input type="hidden" id="pfRosterId" value="\${esc(d.roster_id||"")}"><div id="rosterSuggestions" class="roster-suggestions" hidden></div><div class="identity-note">نام را بنویس یا از فهرست همکلاسی‌ها انتخاب کن. شماره دانشجویی کنار پیشنهادها نمایش داده می‌شود.</div></label>
         <label class="field">تخصص<input type="text" id="pfSpecialty" value="\${esc(d.specialty_main||"")}"></label>
         <label class="field">شهر<input type="text" id="pfCity" value="\${esc(d.city||"")}"></label>
         <label class="field">شماره عمومی (برای بیماران)<input type="tel" id="pfPhonePublic" value="\${esc(d.phone_public||"")}"></label>
@@ -936,6 +937,22 @@ async function viewProfile(){
     </div>\`;
 
   const selectedDays = new Set();
+  let selectedRosterName = $("pfName").value;
+  let rosterSearchTimer;
+  const rosterSuggestions = $("rosterSuggestions");
+  const renderRosterSuggestions = (rows) => {
+    rosterSuggestions.innerHTML = rows.map(x => '<button type="button" class="roster-suggestion" data-roster-id="' + esc(x.id) + '" data-roster-name="' + esc(x.official_name) + '"><span>' + esc(x.official_name) + '</span><small>شماره دانشجویی: ' + esc(x.student_number || "ثبت نشده") + '</small></button>').join("");
+    rosterSuggestions.hidden = !rows.length;
+    rosterSuggestions.querySelectorAll("[data-roster-id]").forEach(b => b.onclick = () => { $("pfName").value = b.dataset.rosterName; $("pfRosterId").value = b.dataset.rosterId; selectedRosterName = b.dataset.rosterName; rosterSuggestions.hidden = true; });
+  };
+  $("pfName").oninput = () => {
+    if ($("pfName").value !== selectedRosterName) $("pfRosterId").value = "";
+    clearTimeout(rosterSearchTimer);
+    const query = $("pfName").value.trim();
+    if (query.length < 2) { rosterSuggestions.hidden = true; return; }
+    rosterSearchTimer = setTimeout(async () => { try { const result = await api("/api/doctors/roster/suggest?q=" + encodeURIComponent(query)); renderRosterSuggestions(result.roster || []); } catch { rosterSuggestions.hidden = true; } }, 180);
+  };
+  view.onclick = e => { if (!e.target.closest || !e.target.closest(".roster-picker")) rosterSuggestions.hidden = true; };
   $("dayToggles").querySelectorAll(".daytoggle").forEach(btn => {
     btn.onclick = () => { btn.classList.toggle("on"); selectedDays.has(btn.dataset.k) ? selectedDays.delete(btn.dataset.k) : selectedDays.add(btn.dataset.k); };
   });
@@ -958,7 +975,7 @@ async function viewProfile(){
     try {
       await api("/api/doctors/me/profile", { method: "PUT", body: JSON.stringify({
         fullName: $("pfName").value, specialtyMain: $("pfSpecialty").value, city: $("pfCity").value,
-        phonePublic: $("pfPhonePublic").value, medicalCouncilNumber: $("pfCouncil").value,
+        phonePublic: $("pfPhonePublic").value, medicalCouncilNumber: $("pfCouncil").value, rosterId: $("pfRosterId").value || undefined,
         email: $("pfEmail").value, bio: $("pfBio").value, cardTemplate: $("pfCardTemplate").value
       })});
       toast("پروفایل ذخیره شد"); await loadMe(); renderChrome();

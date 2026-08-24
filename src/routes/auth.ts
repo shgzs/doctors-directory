@@ -84,10 +84,10 @@ auth.post("/verify-otp", async (c) => {
 
   // Does a profile already exist for this phone?
   let doctor = await c.env.DB.prepare(
-    "SELECT id, role, status, full_name FROM doctors WHERE phone = ?"
+    "SELECT id, role, status, full_name, roster_id FROM doctors WHERE phone = ?"
   )
     .bind(normalized)
-    .first<{ id: string; role: string; status: string; full_name: string | null }>();
+    .first<{ id: string; role: string; status: string; full_name: string | null; roster_id: string | null }>();
 
   if (!doctor) {
     // Is this number on the pre-approved list?
@@ -107,7 +107,21 @@ auth.post("/verify-otp", async (c) => {
       .bind(id, normalized, "", status)
       .run();
 
-    doctor = { id, role: "member", status, full_name: "" };
+    doctor = { id, role: "member", status, full_name: "", roster_id: null };
+  }
+
+  // If the administrator already placed this phone in the class roster,
+  // connect the new/login profile automatically.
+  if (!doctor.roster_id) {
+    const roster = await c.env.DB.prepare("SELECT id, doctor_id FROM class_roster WHERE phone = ?")
+      .bind(normalized).first<{ id: string; doctor_id: string | null }>();
+    if (roster && (!roster.doctor_id || roster.doctor_id === doctor.id)) {
+      await c.env.DB.batch([
+        c.env.DB.prepare("UPDATE doctors SET roster_id = ?, updated_at = datetime('now') WHERE id = ?").bind(roster.id, doctor.id),
+        c.env.DB.prepare("UPDATE class_roster SET doctor_id = ?, updated_at = datetime('now') WHERE id = ?").bind(doctor.id, roster.id),
+      ]);
+      doctor.roster_id = roster.id;
+    }
   }
 
   if (doctor.status === "rejected") {

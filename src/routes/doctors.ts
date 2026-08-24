@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type { Env, JwtPayload } from "../types";
 import { requireApprovedMember, requireAuthenticated } from "../lib/middleware";
-import { normalizePersianSearch, persianSearchSql } from "../lib/persian-text";
+import { normalizePersianSearch, persianSearchSql, rosterNameMatches } from "../lib/persian-text";
 
 const doctors = new Hono<{ Bindings: Env }>();
 
@@ -67,6 +67,16 @@ doctors.get("/me/profile", requireAuthenticated, async (c) => {
     c.env.DB.prepare("SELECT id, asset_key, caption, is_primary FROM doctor_photos WHERE doctor_id = ? ORDER BY sort_order, created_at").bind(auth.sub).all(),
   ]);
   return c.json({ ...doctor, workLocations: locations.results, socialLinks: social.results, extraFields: extra.results, photos: photos.results });
+});
+
+// GET /api/doctors/roster/suggest?q= — name picker used while completing a profile.
+// It returns only a small search result, never the complete class list.
+doctors.get("/roster/suggest", async (c) => {
+  const q = c.req.query("q")?.trim() || "";
+  if (q.length < 2) return c.json({ roster: [] });
+  const { results } = await c.env.DB.prepare("SELECT id, official_name, student_number FROM class_roster ORDER BY official_name ASC LIMIT 500").all<Record<string, unknown>>();
+  const matches = results.filter(x => rosterNameMatches(String(x.official_name || ""), q)).slice(0, 10);
+  return c.json({ roster: matches });
 });
 
 // GET /api/doctors/:id
@@ -141,7 +151,18 @@ doctors.put("/me/profile", requireAuthenticated, async (c) => {
     email?: string;
     bio?: string;
     cardTemplate?: string;
+    rosterId?: string;
   }>();
+
+  if (body.rosterId) {
+    const roster = await c.env.DB.prepare("SELECT id, doctor_id, official_name FROM class_roster WHERE id = ?").bind(body.rosterId).first<{ id: string; doctor_id: string | null; official_name: string }>();
+    if (!roster) return c.json({ error: "فرد انتخاب‌شده در فهرست پیدا نشد" }, 404);
+    if (roster.doctor_id && roster.doctor_id !== auth.sub) return c.json({ error: "این فرد قبلاً به حساب دیگری وصل شده است" }, 409);
+    await c.env.DB.batch([
+      c.env.DB.prepare("UPDATE doctors SET roster_id = ?, updated_at = datetime('now') WHERE id = ?").bind(roster.id, auth.sub),
+      c.env.DB.prepare("UPDATE class_roster SET doctor_id = ?, updated_at = datetime('now') WHERE id = ?").bind(auth.sub, roster.id),
+    ]);
+  }
 
   await c.env.DB.prepare(
     `UPDATE doctors SET
