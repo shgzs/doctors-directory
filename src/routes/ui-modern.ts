@@ -713,7 +713,7 @@ async function viewPublicProfile(key){
             <span class="seal">✓<span class="cross">+</span></span>\${avatarHtml(d, "lg")}
             <h2>\${esc(d.full_name || "بدون نام")}</h2>\${d.specialty_main ? '<span class="stamp">' + esc(d.specialty_main) + "</span>" : ""}
             <p class="muted">\${esc(d.city || "")}</p>\${contactRowsHtml(d, Boolean(ME))}
-            <div class="public-profile-actions"><button class="btn brass sm" id="publicVcardBtn">ذخیره شماره</button><a class="btn ghost sm" href="#/card/\${encodeURIComponent(d.public_id || d.id)}">کارت ویزیت قابل چاپ</a>\${officialUrl ? '<a class="btn ghost sm" target="_blank" rel="noopener" href="' + esc(officialUrl) + '">نظام پزشکی</a>' : ""}</div>
+            <div class="public-profile-actions"><button class="btn brass sm" id="publicVcardBtn">ذخیره شماره</button><a class="btn ghost sm" href="#/card/\${encodeURIComponent(d.public_id || d.id)}">کارت ویزیت قابل چاپ</a>\${officialUrl ? '<a class="btn ghost sm" target="_blank" rel="noopener" href="' + esc(officialUrl) + '">نظام پزشکی</a>' : ""}\${ME && ME.role === "admin" ? '<a class="btn ghost sm" href="#/admin-doctor/' + encodeURIComponent(d.public_id || d.id) + '">ویرایش اطلاعات</a>' : ME && ME.id === d.id ? '<a class="btn ghost sm" href="#/profile">ویرایش پروفایل</a>' : ""}</div>
           </div>
           <div class="doctor-card-details">
             <h1>\${esc(d.full_name || "پروفایل پزشک")}</h1><p class="lead">\${esc(d.specialty_main || "")}</p>
@@ -767,6 +767,44 @@ async function viewBusinessCard(key){
       </div>\`;
     $("printCardBtn").onclick = () => window.print();
   } catch (e) { view.innerHTML = '<div class="empty">پروفایل پیدا نشد.</div>'; toast(e.message, true); }
+}
+
+async function viewAdminDoctor(key){
+  if (!ME || ME.role !== "admin") { view.innerHTML = gatedNotice("این صفحه فقط برای مدیر گروه است."); return; }
+  try {
+    const d = await api("/api/admin/doctors/" + encodeURIComponent(key) + "/profile");
+    const statusLabel = { approved: "تایید‌شده", pending: "در انتظار", hidden: "مخفی‌شده", rejected: "رد‌شده" };
+    view.innerHTML = \`
+      <div class="section-head"><div><a class="profile-back" href="#/admin">← بازگشت به مدیریت اعضا</a><h2>ویرایش اطلاعات فرد</h2><p class="muted">\${esc(d.full_name || "بدون نام")} — اطلاعات این صفحه با دسترسی مدیر ذخیره می‌شود.</p></div></div>
+      <div class="card" style="margin-bottom:20px"><div class="form-grid">
+        <label class="field">نام نمایشی<input id="admFullName" value="\${esc(d.full_name || "")}"></label>
+        <label class="field">نام اصلی / ثبت‌شده<input id="admOfficialName" value="\${esc(d.official_name || "")}"></label>
+        <label class="field">شماره ورود<input id="admPhone" type="tel" value="\${esc(d.phone || "")}"></label>
+        <label class="field">شماره عمومی<input id="admPhonePublic" type="tel" value="\${esc(d.phone_public || "")}"></label>
+        <label class="field">تخصص<input id="admSpecialty" value="\${esc(d.specialty_main || "")}"></label>
+        <label class="field">شهر<input id="admCity" value="\${esc(d.city || "")}"></label>
+        <label class="field">شماره نظام پزشکی<input id="admCouncil" value="\${esc(d.medical_council_number || "")}"></label>
+        <label class="field">ایمیل<input id="admEmail" type="email" value="\${esc(d.email || "")}"></label>
+        <label class="field">نقش<select id="admRole"><option value="member" \${d.role === "member" ? "selected" : ""}>عضو</option><option value="admin" \${d.role === "admin" ? "selected" : ""}>مدیر</option></select></label>
+        <label class="field">وضعیت<select id="admStatus"><option value="approved" \${d.status === "approved" ? "selected" : ""}>تایید‌شده</option><option value="pending" \${d.status === "pending" ? "selected" : ""}>در انتظار</option><option value="hidden" \${d.status === "hidden" ? "selected" : ""}>مخفی‌شده</option><option value="rejected" \${d.status === "rejected" ? "selected" : ""}>رد‌شده</option></select></label>
+        <label class="field">قالب کارت<select id="admTemplate"><option value="default" \${d.card_template === "default" ? "selected" : ""}>دفترچه پزشکی</option><option value="calm" \${d.card_template === "calm" ? "selected" : ""}>آرام و دوستانه</option><option value="dark" \${d.card_template === "dark" ? "selected" : ""}>رسمی و تیره</option></select></label>
+        <label class="field">GUID نظام پزشکی<input id="admImcGuid" value="\${esc(d.imc_guid || "")}"></label>
+        <label class="field full">لینک پروفایل نظام پزشکی<input id="admImcUrl" value="\${esc(d.imc_profile_url || "")}"></label>
+        <label class="field full">درباره<textarea id="admBio">\${esc(d.bio || "")}</textarea></label>
+      </div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="btn" id="saveAdminDoctor">ذخیره اطلاعات</button><a class="btn ghost" href="#/profile-view/\${encodeURIComponent(d.public_id || d.id)}">مشاهده پروفایل</a></div></div>
+      <div class="card"><h3 style="font-size:15px">اطلاعات وابسته</h3><p class="muted">محل‌های کار، شبکه‌های اجتماعی و فیلدهای تکمیلی فعلاً از صفحه پروفایل خود فرد مدیریت می‌شوند و اینجا برای بررسی نمایش داده شده‌اند.</p><div class="admin-detail-list"><b>محل‌های کار:</b> \${(d.workLocations || []).map(x => esc(x.location_name)).join("، ") || "ثبت نشده"}<br><b>شبکه‌های اجتماعی:</b> \${(d.socialLinks || []).map(x => esc(x.platform)).join("، ") || "ثبت نشده"}<br><b>فیلدهای تکمیلی:</b> \${(d.extraFields || []).map(x => esc(x.field_key)).join("، ") || "ثبت نشده"}</div></div>\`;
+    $("saveAdminDoctor").onclick = async () => {
+      try {
+        await api("/api/admin/doctors/" + encodeURIComponent(d.id) + "/profile", { method: "PUT", body: JSON.stringify({
+          fullName: $("admFullName").value, officialName: $("admOfficialName").value, phone: $("admPhone").value,
+          phonePublic: $("admPhonePublic").value, specialtyMain: $("admSpecialty").value, city: $("admCity").value,
+          medicalCouncilNumber: $("admCouncil").value, email: $("admEmail").value, bio: $("admBio").value,
+          role: $("admRole").value, status: $("admStatus").value, cardTemplate: $("admTemplate").value,
+          imcGuid: $("admImcGuid").value, imcProfileUrl: $("admImcUrl").value
+        })}); toast("اطلاعات ذخیره شد");
+      } catch (e) { toast(e.message, true); }
+    };
+  } catch (e) { toast(e.message, true); view.innerHTML = '<div class="empty">پروفایل پیدا نشد.</div>'; }
 }
 
 async function viewReferrals(){
@@ -1012,7 +1050,7 @@ async function viewAdmin(){
       <h3 style="font-size:15px">همه‌ی اعضا</h3>
       <div style="display:flex;gap:8px">
         <input type="search" id="adminSearch" placeholder="جست‌وجو…" style="width:200px">
-        <select id="adminStatus"><option value="">همه وضعیت‌ها</option><option value="approved">تایید‌شده</option><option value="pending">در انتظار</option><option value="rejected">رد‌شده</option></select>
+        <select id="adminStatus"><option value="">همه وضعیت‌ها</option><option value="approved">تایید‌شده</option><option value="pending">در انتظار</option><option value="hidden">مخفی‌شده</option><option value="rejected">رد‌شده</option></select>
       </div>
     </div>
     <div class="admin-table"><table id="adminTable"><thead><tr><th>نام</th><th>نام اصلی</th><th>شماره</th><th>وضعیت</th><th>نقش</th><th>عملیات</th></tr></thead><tbody></tbody></table></div>
@@ -1049,13 +1087,24 @@ async function viewAdmin(){
       const d = await api("/api/admin/doctors?" + q.toString());
       document.querySelector("#adminTable tbody").innerHTML = d.doctors.map(x => \`
         <tr><td>\${esc(x.full_name || "—")}</td><td>\${esc(x.official_name || "—")}\${x.name_changed ? '<span class="status-pill pending" style="margin-right:5px">ویرایش شده</span>' : ''}</td><td>\${esc(displayPhone(x.phone))}</td>
-        <td><span class="status-pill \${x.status}">\${x.status === "approved" ? "تایید‌شده" : x.status === "pending" ? "در انتظار" : "رد‌شده"}</span></td>
+        <td><span class="status-pill \${x.status}">\${x.status === "approved" ? "تایید‌شده" : x.status === "pending" ? "در انتظار" : x.status === "hidden" ? "مخفی‌شده" : "رد‌شده"}</span></td>
         <td>\${x.role === "admin" ? "مدیر" : "عضو"}</td>
-        <td><button class="btn sm ghost" data-role="\${x.id}" data-cur="\${x.role}">\${x.role === "admin" ? "حذف نقش مدیر" : "مدیر کردن"}</button><button class="btn sm ghost" data-doctor-imc="\${x.id}" data-imc-guid="\${esc(x.imc_guid || "")}">نظام پزشکی</button></td></tr>\`
+        <td><button class="btn sm ghost" data-admin-edit="\${x.id}">ویرایش</button><button class="btn sm ghost" data-toggle-status="\${x.id}" data-current-status="\${x.status}">\${x.status === "hidden" ? "نمایش" : "مخفی کردن"}</button><button class="btn sm danger" data-admin-delete="\${x.id}" data-admin-name="\${esc(x.full_name || "این فرد")}">حذف</button><button class="btn sm ghost" data-role="\${x.id}" data-cur="\${x.role}">\${x.role === "admin" ? "حذف نقش مدیر" : "مدیر کردن"}</button><button class="btn sm ghost" data-doctor-imc="\${x.id}" data-imc-guid="\${esc(x.imc_guid || "")}">نظام پزشکی</button></td></tr>\`
       ).join("") || '<tr><td colspan="5" class="muted" style="text-align:center;padding:20px">موردی پیدا نشد</td></tr>';
       document.querySelectorAll("[data-role]").forEach(b => b.onclick = async () => {
         const newRole = b.dataset.cur === "admin" ? "member" : "admin";
         try { await api("/api/admin/doctors/" + b.dataset.role + "/role", { method: "PATCH", body: JSON.stringify({ role: newRole })}); toast("نقش به‌روزرسانی شد"); loadTable(); }
+        catch (e) { toast(e.message, true); }
+      });
+      document.querySelectorAll("[data-admin-edit]").forEach(b => b.onclick = () => { location.hash = "#/admin-doctor/" + encodeURIComponent(b.dataset.adminEdit); });
+      document.querySelectorAll("[data-toggle-status]").forEach(b => b.onclick = async () => {
+        const next = b.dataset.currentStatus === "hidden" ? "approved" : "hidden";
+        try { await api("/api/admin/doctors/" + encodeURIComponent(b.dataset.toggleStatus) + "/status", { method: "PATCH", body: JSON.stringify({ status: next }) }); toast(next === "hidden" ? "پروفایل مخفی شد" : "پروفایل دوباره نمایش داده شد"); loadTable(); }
+        catch (e) { toast(e.message, true); }
+      });
+      document.querySelectorAll("[data-admin-delete]").forEach(b => b.onclick = async () => {
+        if (!confirm("اطلاعات «" + b.dataset.adminName + "» برای همیشه حذف شود؟ این کار قابل برگشت نیست.")) return;
+        try { await api("/api/admin/doctors/" + encodeURIComponent(b.dataset.adminDelete), { method: "DELETE" }); toast("اطلاعات فرد حذف شد"); loadPending(); loadTable(); }
         catch (e) { toast(e.message, true); }
       });
       document.querySelectorAll("[data-doctor-imc]").forEach(b => b.onclick = async () => {
@@ -1088,6 +1137,7 @@ async function renderRoute(){
   if (path === "directory") return viewDirectory();
   if (path.startsWith("profile-view/")) return viewPublicProfile(decodeURIComponent(path.slice("profile-view/".length)));
   if (path.startsWith("card/")) return viewBusinessCard(decodeURIComponent(path.slice("card/".length)));
+  if (path.startsWith("admin-doctor/")) return viewAdminDoctor(decodeURIComponent(path.slice("admin-doctor/".length)));
   if (path === "requests") return viewRequests();
   if (path.startsWith("request/")) return viewRequestDetail(decodeURIComponent(path.slice("request/".length)));
   if (path === "referrals") return viewReferrals();

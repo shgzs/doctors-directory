@@ -16,6 +16,6 @@ export type Env = {
 export type JwtPayload = {
   sub: string;      // doctor id
   role: "member" | "admin";
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "hidden";
   exp: number;
 };
