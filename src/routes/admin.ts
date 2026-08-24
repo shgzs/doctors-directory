@@ -99,7 +99,7 @@ admin.patch("/roster/:id/imc", async (c) => {
   }
   const profileUrl = body.imcProfileUrl?.trim() || (guid ? `https://membersearch.irimc.org/member/profile?id=${guid}` : null);
   await c.env.DB.prepare(
-    `UPDATE class_roster SET student_number = ?, council_number = ?, imc_guid = ?,
+    `UPDATE class_roster SET student_number = COALESCE(?, student_number), council_number = ?, imc_guid = ?,
        imc_profile_url = ?, imc_photo_url = ?, updated_at = datetime('now') WHERE id = ?`
   ).bind(
     body.studentNumber?.trim() || null,

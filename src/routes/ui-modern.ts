@@ -355,6 +355,12 @@ function initials(name){
   const parts = String(name || "؟").trim().split(/\\s+/);
   return (parts[0]?.[0] || "؟") + (parts[1]?.[0] || "");
 }
+function displayPhone(value){
+  const raw = String(value || "").trim();
+  if (/^98\d{10}$/.test(raw)) return "0" + raw.slice(2);
+  if (/^0098\d{10}$/.test(raw)) return "0" + raw.slice(4);
+  return raw;
+}
 function avatarHtml(doctor, size){
   const cls = "avatar " + size;
   if (doctor.avatar_key) {
@@ -563,8 +569,8 @@ async function viewDirectory(){
 
 function contactRowsHtml(d, canSeePrivate){
   const rows = [];
-  if (d.phone_public) rows.push(["☎", "شماره عمومی", d.phone_public]);
-  if (canSeePrivate && d.phone) rows.push(["📱", "شماره شخصی", d.phone]);
+  if (d.phone_public) rows.push(["☎", "شماره عمومی", displayPhone(d.phone_public)]);
+  if (canSeePrivate && d.phone) rows.push(["📱", "شماره شخصی", displayPhone(d.phone)]);
   if (canSeePrivate && d.email) rows.push(["✉", "ایمیل", d.email]);
   if (d.medical_council_number) rows.push(["🩺", "نظام پزشکی", d.medical_council_number]);
   return rows.map(([ic,label,val]) => \`
@@ -658,7 +664,7 @@ async function viewRequestDetail(id){
         <div class="section-head"><div><h2>جزئیات درخواست</h2><p class="muted">\${esc([x.specialty,x.city].filter(Boolean).join(" · ") || "درخواست معرفی")}</p></div><span class="status-pill \${x.status}">\${x.status === "answered" ? "پاسخ دارد" : x.status === "closed" ? "بسته‌شده" : "باز"}</span></div>
         <div class="card"><h3>\${esc(x.title)}</h3><p class="muted" style="margin-top:10px">\${esc(x.details || "توضیحی ثبت نشده")}</p><p class="muted" style="font-size:12px;margin-top:12px">ثبت‌شده توسط \${esc(x.asked_by || "—")}</p></div>
         <div class="card" style="margin-top:18px"><div class="section-head"><h3 style="font-size:17px">پاسخ‌ها</h3><span class="stamp">\${x.answers.length} پاسخ</span></div>
-          \${x.answers.length ? x.answers.map(a => \`<div class="answer-card"><div class="answer-head"><b>\${esc(a.recommended_name)}</b><span class="muted" style="font-size:12px">پیشنهاد از \${esc(a.answered_by || "—")}</span></div><div class="muted" style="font-size:13px;margin-top:5px">\${esc([a.specialty,a.city,a.phone].filter(Boolean).join(" · "))}</div>\${a.notes ? \`<p style="font-size:13px;margin:7px 0 0">\${esc(a.notes)}</p>\` : ""}</div>\`).join("") : '<p class="muted">هنوز پاسخی ثبت نشده است.</p>'}
+          \${x.answers.length ? x.answers.map(a => \`<div class="answer-card"><div class="answer-head"><b>\${esc(a.recommended_name)}</b><span class="muted" style="font-size:12px">پیشنهاد از \${esc(a.answered_by || "—")}</span></div><div class="muted" style="font-size:13px;margin-top:5px">\${esc([a.specialty,a.city,displayPhone(a.phone)].filter(Boolean).join(" · "))}</div>\${a.notes ? \`<p style="font-size:13px;margin:7px 0 0">\${esc(a.notes)}</p>\` : ""}</div>\`).join("") : '<p class="muted">هنوز پاسخی ثبت نشده است.</p>'}
         </div>
         \${x.status !== "closed" ? \`<div class="card" style="margin-top:18px"><h3 style="font-size:16px">پاسخ شما</h3><div class="form-grid" style="margin-top:12px"><label class="field">نام پزشک یا فرد پیشنهادی<input id="ansName"></label><label class="field">تخصص<input id="ansSpecialty"></label><label class="field">شهر<input id="ansCity"></label><label class="field">شماره تماس<input id="ansPhone"></label><label class="field full">توضیح شما<textarea id="ansNotes"></textarea></label></div><button class="btn" style="margin-top:12px" id="sendAnswerBtn">ثبت پاسخ</button></div>\` : ""}
       </div>\`;
@@ -947,7 +953,7 @@ async function viewAdmin(){
       const d = await api("/api/admin/pending");
       $("pendingGrid").innerHTML = d.pending.length ? d.pending.map(x => \`
         <div class="pending-card">
-          <b>\${esc(x.full_name || "بدون نام")}</b><div class="muted" style="font-size:13px">\${esc(x.phone)}</div>
+          <b>\${esc(x.full_name || "بدون نام")}</b><div class="muted" style="font-size:13px">\${esc(displayPhone(x.phone))}</div>
           <div style="display:flex;gap:8px;margin-top:12px">
             <button class="btn sm brass" data-approve="\${x.id}">🖋 زدن مهر تایید</button>
             <button class="btn sm danger" data-reject="\${x.id}">رد</button>
@@ -971,7 +977,7 @@ async function viewAdmin(){
     try {
       const d = await api("/api/admin/doctors?" + q.toString());
       document.querySelector("#adminTable tbody").innerHTML = d.doctors.map(x => \`
-        <tr><td>\${esc(x.full_name || "—")}</td><td>\${esc(x.official_name || "—")}\${x.name_changed ? '<span class="status-pill pending" style="margin-right:5px">ویرایش شده</span>' : ''}</td><td>\${esc(x.phone)}</td>
+        <tr><td>\${esc(x.full_name || "—")}</td><td>\${esc(x.official_name || "—")}\${x.name_changed ? '<span class="status-pill pending" style="margin-right:5px">ویرایش شده</span>' : ''}</td><td>\${esc(displayPhone(x.phone))}</td>
         <td><span class="status-pill \${x.status}">\${x.status === "approved" ? "تایید‌شده" : x.status === "pending" ? "در انتظار" : "رد‌شده"}</span></td>
         <td>\${x.role === "admin" ? "مدیر" : "عضو"}</td>
         <td><button class="btn sm ghost" data-role="\${x.id}" data-cur="\${x.role}">\${x.role === "admin" ? "حذف نقش مدیر" : "مدیر کردن"}</button></td></tr>\`
@@ -985,7 +991,7 @@ async function viewAdmin(){
   }
   $("adminSearch").onkeydown = (e) => { if (e.key === "Enter") loadTable(); };
   $("adminStatus").onchange = loadTable;
-  async function loadRoster(){ try { const q=$("rosterSearch").value.trim(); const d=await api("/api/admin/roster"+(q?"?q="+encodeURIComponent(q):"")); document.querySelector("#rosterTable tbody").innerHTML=d.roster.map(x=>\`<tr><td>\${esc(x.official_name)}</td><td>\${esc(x.field||"—")}</td><td>\${esc(x.student_number||"—")}</td><td>\${esc(x.council_number||"—")}</td><td>\${esc(x.phone||"—")}</td><td><button class="btn sm ghost" data-roster-phone="\${esc(x.id)}">\${x.phone?"تغییر شماره":"ثبت شماره"}</button><button class="btn sm ghost" data-roster-imc="\${esc(x.id)}">ویرایش نظام</button></td></tr>\`).join(""); $("rosterTable").querySelectorAll("[data-roster-phone]").forEach(b=>b.onclick=async()=>{const phone=prompt("شماره موبایل را وارد کنید:");if(!phone)return;try{await api("/api/admin/roster/"+encodeURIComponent(b.dataset.rosterPhone)+"/phone",{method:"PATCH",body:JSON.stringify({phone})});toast("شماره ذخیره شد");loadRoster();loadTable()}catch(e){toast(e.message,true)}}); $("rosterTable").querySelectorAll("[data-roster-imc]").forEach(b=>b.onclick=async()=>{const x=d.roster.find(r=>String(r.id)===String(b.dataset.rosterImc)); const studentNumber=prompt("شماره دانشجویی:",x.student_number||""); if(studentNumber===null)return; const councilNumber=prompt("شماره نظام پزشکی:",x.council_number||""); if(councilNumber===null)return; const imcGuid=prompt("GUID نظام پزشکی (اختیاری):",x.imc_guid||""); if(imcGuid===null)return; try{await api("/api/admin/roster/"+encodeURIComponent(x.id)+"/imc",{method:"PATCH",body:JSON.stringify({studentNumber,councilNumber,imcGuid})});toast("اطلاعات نظام پزشکی ذخیره شد");loadRoster();loadTable()}catch(e){toast(e.message,true)}}); } catch(e){toast(e.message,true)} }
+  async function loadRoster(){ try { const q=$("rosterSearch").value.trim(); const d=await api("/api/admin/roster"+(q?"?q="+encodeURIComponent(q):"")); document.querySelector("#rosterTable tbody").innerHTML=d.roster.map(x=>\`<tr><td>\${esc(x.official_name)}</td><td>\${esc(x.field||"—")}</td><td>\${esc(x.student_number||"—")}</td><td>\${esc(x.council_number||"—")}</td><td>\${esc(displayPhone(x.phone)||"—")}</td><td><button class="btn sm ghost" data-roster-phone="\${esc(x.id)}">\${x.phone?"تغییر شماره":"ثبت شماره"}</button><button class="btn sm ghost" data-roster-imc="\${esc(x.id)}">ویرایش نظام</button></td></tr>\`).join(""); $("rosterTable").querySelectorAll("[data-roster-phone]").forEach(b=>b.onclick=async()=>{const phone=prompt("شماره موبایل را وارد کنید:");if(!phone)return;try{await api("/api/admin/roster/"+encodeURIComponent(b.dataset.rosterPhone)+"/phone",{method:"PATCH",body:JSON.stringify({phone})});toast("شماره ذخیره شد");loadRoster();loadTable()}catch(e){toast(e.message,true)}}); $("rosterTable").querySelectorAll("[data-roster-imc]").forEach(b=>b.onclick=async()=>{const x=d.roster.find(r=>String(r.id)===String(b.dataset.rosterImc)); const councilNumber=prompt("شماره نظام پزشکی:",x.council_number||""); if(councilNumber===null)return; const imcGuid=prompt("GUID نظام پزشکی (اختیاری):",x.imc_guid||""); if(imcGuid===null)return; try{await api("/api/admin/roster/"+encodeURIComponent(x.id)+"/imc",{method:"PATCH",body:JSON.stringify({councilNumber,imcGuid})});toast("اطلاعات نظام پزشکی ذخیره شد");loadRoster();loadTable()}catch(e){toast(e.message,true)}}); } catch(e){toast(e.message,true)} }
   $("rosterSearch").onkeydown=e=>{if(e.key==="Enter")loadRoster()};
   loadPending(); loadTable(); loadRoster();
 }
