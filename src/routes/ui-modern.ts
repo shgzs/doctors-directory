@@ -203,7 +203,8 @@ label.field{display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:va
   padding:18px;text-align:right;transition:.18s;position:relative;overflow:hidden;
 }
 .member-card:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
-.profile-gallery{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.profile-gallery img{width:68px;height:68px;object-fit:cover;border-radius:10px;border:2px solid var(--line)}.profile-gallery img.primary{border-color:var(--brass);box-shadow:0 0 0 2px var(--brass-light)}.photo-manager{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:12px}.photo-manager small{color:var(--ink-soft)}
+.profile-gallery-section{margin-top:18px;padding:16px 18px;border:1px solid var(--line);border-radius:18px;background:var(--paper)}.profile-gallery-section h3{margin:0;font-size:15px}.profile-gallery{display:flex;gap:8px;overflow-x:auto;overscroll-behavior-inline:contain;margin-top:12px;padding:2px 2px 8px;scrollbar-width:thin}.profile-gallery button{flex:0 0 auto;padding:0;border:0;background:none;border-radius:11px;line-height:0}.profile-gallery img{width:68px;height:68px;object-fit:cover;border-radius:11px;border:2px solid var(--line);cursor:zoom-in;transition:transform .18s ease,box-shadow .18s ease}.profile-gallery button:hover img{transform:scale(1.04);box-shadow:0 6px 14px #2b21151f}.profile-gallery img.primary{border-color:var(--brass);box-shadow:0 0 0 2px var(--brass-light)}.photo-manager{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-top:12px}.photo-manager small{color:var(--ink-soft)}
+.profile-lightbox{position:fixed;inset:0;z-index:100;background:#211c18e8;display:grid;place-items:center;padding:20px;direction:ltr}.profile-lightbox[hidden]{display:none}.profile-lightbox-inner{position:relative;width:min(94vw,1000px);height:min(90vh,900px);display:grid;place-items:center}.profile-lightbox img{display:block;max-width:calc(100% - 92px);max-height:100%;object-fit:contain;border-radius:14px;box-shadow:0 18px 60px #0008;user-select:none;touch-action:pan-y}.profile-lightbox button{position:absolute;z-index:2;width:40px;height:40px;border:1px solid #fff8;border-radius:50%;background:#fff;color:var(--ink);font-size:24px;line-height:1;cursor:pointer}.profile-lightbox .close-lightbox{top:0;right:0}.profile-lightbox .prev-lightbox{left:10px;top:50%;transform:translateY(-50%)}.profile-lightbox .next-lightbox{right:10px;top:50%;transform:translateY(-50%)}.profile-lightbox .photo-counter{bottom:0;left:50%;transform:translateX(-50%);width:auto;padding:0 12px;border-radius:16px;font-size:12px}
 .member-card .top{display:flex;align-items:center;gap:12px;margin-bottom:12px}
 .avatar{border-radius:50%;object-fit:cover;flex:none;display:grid;place-items:center;font-weight:700;color:#fff}
 .avatar.md{width:52px;height:52px;font-size:17px}
@@ -242,6 +243,8 @@ label.field{display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:va
 .form-grid .full{grid-column:1/-1}
 .avatar-upload{display:flex;align-items:center;gap:16px;margin-bottom:22px}
 .avatar-upload .avatar{width:84px;height:84px;font-size:26px;position:relative}
+.profile-tools{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}.qr-box{display:flex;align-items:center;gap:10px;color:var(--ink-soft);font-size:12px}.qr-box img{width:92px;height:92px;object-fit:contain;border:1px solid var(--line);border-radius:10px;background:#fff}
+.photo-manager-list .item-row .photo-actions{opacity:0;pointer-events:none;transition:opacity .15s ease}.photo-manager-list .item-row:hover .photo-actions,.photo-manager-list .item-row:focus-within .photo-actions{opacity:1;pointer-events:auto}
 .status-banner{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;margin-bottom:22px}
 .status-banner.pending{background:#fbe9d0;border:1px solid #e9c98a}
 .status-banner.approved{background:#e9efe3;border:1px solid #c7d6b8}
@@ -359,9 +362,11 @@ function initials(name){
 }
 function displayPhone(value){
   const original = String(value || "").trim();
-  const raw = original.replace(/[^0-9+]/g, "").replace(/^\\+/, "");
-  if (/^98\d{10}$/.test(raw)) return "0" + raw.slice(2);
-  if (/^0098\d{10}$/.test(raw)) return "0" + raw.slice(4);
+  const raw = original.replace(/[۰-۹]/g, d => String("۰۱۲۳۴۵۶۷۸۹".indexOf(d))).replace(/[^0-9]/g, "");
+  if (raw.startsWith("00")) return displayPhone(raw.slice(2));
+  if (raw.startsWith("98") && raw.length >= 12) return "0" + raw.slice(-10);
+  if (raw.startsWith("9") && raw.length >= 10) return "0" + raw.slice(-10);
+  if (raw.startsWith("0") && raw.length === 11) return raw;
   return original;
 }
 function socialLinkHtml(s){
@@ -385,7 +390,11 @@ function avatarHtml(doctor, size){
 }
 function photoGalleryHtml(photos){
   if (!photos || !photos.length) return "";
-  return '<div class="profile-gallery">' + photos.map(p => '<img class="' + (p.is_primary ? 'primary' : '') + '" src="/api/assets/' + encodeURIComponent(p.asset_key) + '" alt="عکس پروفایل">').join('') + '</div>';
+  return '<div class="profile-gallery">' + photos.map((p, i) => '<button type="button" data-gallery-index="' + i + '" aria-label="نمایش عکس ' + (i + 1) + '"><img class="' + (p.is_primary ? 'primary' : '') + '" src="/api/assets/' + encodeURIComponent(p.asset_key) + '" alt="عکس پروفایل"></button>').join('') + '</div>';
+}
+function profileLightboxHtml(photos){
+  if (!photos || !photos.length) return "";
+  return '<div class="profile-lightbox" id="profileLightbox" hidden><div class="profile-lightbox-inner"><button type="button" class="close-lightbox" aria-label="بستن">×</button><button type="button" class="prev-lightbox" aria-label="عکس قبلی">‹</button><img id="profileLightboxImage" src="/api/assets/' + encodeURIComponent(photos[0].asset_key) + '" alt="نمایش بزرگ عکس پروفایل"><button type="button" class="next-lightbox" aria-label="عکس بعدی">›</button><button type="button" class="photo-counter" aria-live="polite">1 / ' + photos.length + '</button></div></div>';
 }
 
 const DAYS = [
@@ -613,7 +622,6 @@ async function openDoctorModal(id){
               <h2>\${esc(d.full_name)}</h2>
               \${d.specialty_main ? '<span class="stamp">' + esc(d.specialty_main) + "</span>" : ""}
               \${contactRowsHtml(d, canSeePrivate)}
-              \${photoGalleryHtml(d.photos)}
               <div class="share-row">
                 <a class="btn ghost sm" style="flex:1" href="\${url}">مشاهده صفحه</a>
                 <button class="btn brass sm" id="vcardBtn">ذخیره شماره</button>
@@ -702,7 +710,7 @@ async function viewPublicProfile(key){
         <a class="profile-back" href="#/directory">← بازگشت به دفترچه همکلاسی‌ها</a>
         <div class="doctor-card-page">
           <div class="bizcard doctor-business-card template-\${esc(d.card_template || "default")}">
-            <span class="seal">✓<span class="cross">+</span></span>\${avatarHtml(d, "lg")}\${photoGalleryHtml(d.photos)}
+            <span class="seal">✓<span class="cross">+</span></span>\${avatarHtml(d, "lg")}
             <h2>\${esc(d.full_name || "بدون نام")}</h2>\${d.specialty_main ? '<span class="stamp">' + esc(d.specialty_main) + "</span>" : ""}
             <p class="muted">\${esc(d.city || "")}</p>\${contactRowsHtml(d, Boolean(ME))}
             <div class="public-profile-actions"><button class="btn brass sm" id="publicVcardBtn">ذخیره شماره</button><a class="btn ghost sm" href="#/card/\${encodeURIComponent(d.public_id || d.id)}">کارت ویزیت قابل چاپ</a>\${officialUrl ? '<a class="btn ghost sm" target="_blank" rel="noopener" href="' + esc(officialUrl) + '">نظام پزشکی</a>' : ""}</div>
@@ -715,7 +723,26 @@ async function viewPublicProfile(key){
             \${(d.extraFields||[]).length ? '<div class="detail-block"><h3>اطلاعات تکمیلی</h3>' + d.extraFields.map(f => '<div class="link-item"><b>' + esc(f.field_key) + '</b> — ' + esc(f.field_value) + '</div>').join('') + '</div>' : ""}
           </div>
         </div>
+        \${d.photos && d.photos.length ? '<div class="profile-gallery-section"><h3>گالری تصاویر</h3>' + photoGalleryHtml(d.photos) + '</div>' + profileLightboxHtml(d.photos) : ''}
       </div>\`;
+    const galleryPhotos = d.photos || [];
+    const lightbox = $("profileLightbox");
+    if (lightbox && galleryPhotos.length) {
+      let galleryIndex = 0;
+      const image = $("profileLightboxImage");
+      const counter = lightbox.querySelector(".photo-counter");
+      const showPhoto = (index) => { galleryIndex = (index + galleryPhotos.length) % galleryPhotos.length; image.src = "/api/assets/" + encodeURIComponent(galleryPhotos[galleryIndex].asset_key); counter.textContent = (galleryIndex + 1) + " / " + galleryPhotos.length; };
+      const close = () => { lightbox.hidden = true; };
+      view.querySelectorAll("[data-gallery-index]").forEach(b => b.onclick = () => { showPhoto(Number(b.dataset.galleryIndex)); lightbox.hidden = false; });
+      lightbox.querySelector(".close-lightbox").onclick = close;
+      lightbox.querySelector(".prev-lightbox").onclick = () => showPhoto(galleryIndex - 1);
+      lightbox.querySelector(".next-lightbox").onclick = () => showPhoto(galleryIndex + 1);
+      lightbox.onclick = (e) => { if (e.target === lightbox) close(); };
+      let startX = 0;
+      lightbox.querySelector(".profile-lightbox-inner").ontouchstart = e => { startX = e.changedTouches[0].clientX; };
+      lightbox.querySelector(".profile-lightbox-inner").ontouchend = e => { const delta = e.changedTouches[0].clientX - startX; if (Math.abs(delta) > 40) showPhoto(galleryIndex + (delta > 0 ? -1 : 1)); };
+      document.onkeydown = e => { if (lightbox.hidden) return; if (e.key === "Escape") close(); if (e.key === "ArrowLeft") showPhoto(galleryIndex + 1); if (e.key === "ArrowRight") showPhoto(galleryIndex - 1); };
+    }
     $("publicVcardBtn").onclick = () => { const vcf = "BEGIN:VCARD\\nVERSION:3.0\\nFN:" + d.full_name + "\\nTEL:" + (d.phone_public || d.phone || "") + (d.email ? "\\nEMAIL:" + d.email : "") + "\\nEND:VCARD"; const blob = new Blob([vcf], {type:"text/vcard"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=(d.full_name||"doctor")+".vcf"; a.click(); };
   } catch (e) { view.innerHTML = '<div class="empty">پروفایل پیدا نشد.</div>'; toast(e.message, true); }
 }
@@ -808,13 +835,9 @@ async function viewProfile(){
     <div class="card" style="margin-bottom:20px">
       <div class="avatar-upload">
         \${avatarHtml(d, "lg")}
-        <div>
-          <label class="btn sm brass" for="avatarFile">تغییر عکس پروفایل</label>
-          <input type="file" id="avatarFile" accept="image/png,image/jpeg,image/webp" style="display:none">
-          <p class="muted" style="font-size:12.5px;margin:6px 0 0">JPG یا PNG، حداکثر ۳ مگابایت</p>
-        </div>
+        <div><label class="iconbtn" title="افزودن عکس به گالری" for="photoFiles">＋</label><p class="muted" style="font-size:12.5px;margin:6px 0 0">افزودن عکس با دکمه +</p></div>
       </div>
-      <div class="photo-manager"><label class="btn sm ghost" for="photoFiles">افزودن عکس به گالری</label><input type="file" id="photoFiles" accept="image/png,image/jpeg,image/webp" multiple style="display:none"><small>یکی از عکس‌ها اصلی است و بقیه در صفحه پروفایل دیده می‌شوند.</small></div><div id="photoManagerList"></div>
+      <div class="photo-manager"><input type="file" id="photoFiles" accept="image/png,image/jpeg,image/webp" multiple style="display:none"><small>یکی از عکس‌ها اصلی است و بقیه در صفحه پروفایل دیده می‌شوند.</small></div><div id="photoManagerList" class="photo-manager-list"></div>
       <div class="form-grid">
         <label class="field">نام نمایشی<input type="text" id="pfName" value="\${esc(d.full_name||"")}"><div class="identity-note">این نام روی کارت شما نمایش داده می‌شود. نام ثبت‌شده‌ی اولیه فقط برای مدیر قابل مشاهده است.</div></label>
         <label class="field">تخصص<input type="text" id="pfSpecialty" value="\${esc(d.specialty_main||"")}"></label>
@@ -826,6 +849,7 @@ async function viewProfile(){
         <label class="field full">درباره من<textarea id="pfBio">\${esc(d.bio||"")}</textarea></label>
       </div>
       <button class="btn" style="margin-top:14px" id="saveProfileBtn">ذخیره‌ی پروفایل</button>
+      <div class="profile-tools"><a class="btn ghost sm" href="#/profile-view/\${encodeURIComponent(d.public_id || d.id)}">مشاهده پروفایل عمومی</a><div class="qr-box"><img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=\${encodeURIComponent(location.origin + "/d/" + (d.public_id || d.id))}" alt="QR کارت ویزیت"><small>QR لینک پروفایل</small></div></div>
     </div>
 
     <div class="card" style="margin-bottom:20px">
@@ -878,16 +902,6 @@ async function viewProfile(){
     btn.onclick = () => { btn.classList.toggle("on"); selectedDays.has(btn.dataset.k) ? selectedDays.delete(btn.dataset.k) : selectedDays.add(btn.dataset.k); };
   });
 
-  $("avatarFile").onchange = async () => {
-    const f = $("avatarFile").files[0]; if (!f) return;
-    const form = new FormData(); form.append("file", f);
-    try {
-      const res = await fetch("/api/doctors/me/avatar", { method: "POST", headers: { Authorization: "Bearer " + TOKEN }, body: form });
-      const dd = await res.json(); if (!res.ok) throw new Error(dd.error || "آپلود ناموفق بود");
-      toast("عکس پروفایل ذخیره شد"); await loadMe(); renderRoute();
-    } catch (e) { toast(e.message, true); }
-  };
-
   $("photoFiles").onchange = async () => {
     const files = Array.from($("photoFiles").files || []); if (!files.length) return;
     try {
@@ -897,7 +911,7 @@ async function viewProfile(){
   };
 
   function renderPhotos(){
-    $("photoManagerList").innerHTML = (ME.photos||[]).map(p => '<div class="item-row"><div style="display:flex;align-items:center;gap:9px"><img src="/api/assets/' + encodeURIComponent(p.asset_key) + '" style="width:48px;height:48px;object-fit:cover;border-radius:8px"><span>' + (p.is_primary ? 'عکس اصلی' : 'عکس گالری') + '</span></div><div style="display:flex;gap:6px">' + (!p.is_primary ? '<button class="btn ghost sm" data-photo-primary="' + p.id + '">اصلی کردن</button>' : '') + '<button class="btn danger sm" data-photo-delete="' + p.id + '">حذف</button></div></div>').join('') || '<p class="muted" style="font-size:12px;margin-top:10px">هنوز عکسی به گالری اضافه نشده.</p>';
+    $("photoManagerList").innerHTML = (ME.photos||[]).map(p => '<div class="item-row"><div style="display:flex;align-items:center;gap:9px"><img src="/api/assets/' + encodeURIComponent(p.asset_key) + '" style="width:48px;height:48px;object-fit:cover;border-radius:8px"><span>' + (p.is_primary ? 'عکس اصلی' : 'عکس گالری') + '</span></div><div class="photo-actions" style="display:flex;gap:6px">' + (!p.is_primary ? '<button class="btn ghost sm" data-photo-primary="' + p.id + '">اصلی کردن</button>' : '') + '<button class="btn danger sm" data-photo-delete="' + p.id + '">حذف</button></div></div>').join('') || '<p class="muted" style="font-size:12px;margin-top:10px">هنوز عکسی به گالری اضافه نشده.</p>';
     $("photoManagerList").querySelectorAll("[data-photo-primary]").forEach(b => b.onclick = async () => { try { await api("/api/doctors/me/photos/" + b.dataset.photoPrimary + "/primary", {method:"PATCH"}); await loadMe(); renderPhotos(); toast("عکس اصلی تغییر کرد"); } catch(e){toast(e.message,true)} });
     $("photoManagerList").querySelectorAll("[data-photo-delete]").forEach(b => b.onclick = async () => { if(!confirm("این عکس حذف شود؟")) return; try { await api("/api/doctors/me/photos/" + b.dataset.photoDelete, {method:"DELETE"}); await loadMe(); renderPhotos(); toast("عکس حذف شد"); } catch(e){toast(e.message,true)} });
   }
