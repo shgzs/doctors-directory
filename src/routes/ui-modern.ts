@@ -245,6 +245,7 @@ label.field{display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:va
 .avatar-upload .avatar{width:84px;height:84px;font-size:26px;position:relative}
 .profile-tools{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}.qr-box{display:flex;align-items:center;gap:10px;color:var(--ink-soft);font-size:12px}.qr-box img{width:92px;height:92px;object-fit:contain;border:1px solid var(--line);border-radius:10px;background:#fff}
 .roster-picker{position:relative}.roster-suggestions{position:absolute;z-index:20;top:calc(100% + 4px);right:0;left:0;display:grid;gap:4px;padding:6px;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 28px #2b21151f}.roster-suggestions[hidden]{display:none}.roster-suggestion{display:flex;justify-content:space-between;gap:12px;padding:8px 10px;border:0;border-radius:8px;background:transparent;color:var(--ink);font:inherit;text-align:right;cursor:pointer}.roster-suggestion:hover{background:var(--paper-2)}.roster-suggestion small{color:var(--ink-soft);white-space:nowrap}
+.visibility-guide{display:grid;gap:7px;margin:0 0 18px;padding:13px 15px;border:1px solid var(--line);border-radius:14px;background:var(--paper-2);font-size:12.5px;color:var(--ink-soft)}.visibility-guide strong{color:var(--ink)}.visibility-guide span{display:block}.visibility-help{display:block;margin-top:5px;color:var(--ink-soft);font-size:11.5px;font-weight:400;line-height:1.7}
 .photo-manager-list .item-row .photo-actions{opacity:0;pointer-events:none;transition:opacity .15s ease}.photo-manager-list .item-row:hover .photo-actions,.photo-manager-list .item-row:focus-within .photo-actions{opacity:1;pointer-events:auto}
 .status-banner{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;margin-bottom:22px}
 .status-banner.pending{background:#fbe9d0;border:1px solid #e9c98a}
@@ -866,6 +867,7 @@ async function viewProfile(){
   view.innerHTML = \`
     <div class="section-head"><h2>پروفایل من</h2></div>
     <div class="profile-intro"><div><h3>کارت تو، روایت کوتاه توست</h3><div style="font-size:13px;color:#e5f2ef">هرچه اطلاعات کامل‌تر باشد، همکلاسی‌ها راحت‌تر پیدایت می‌کنند.</div></div><div class="profile-progress"><small><span>کامل بودن پروفایل</span><b style="color:#fff">\${profileScore}%</b></small><i><b style="width:\${profileScore}%"></b></i></div></div>
+    <div class="visibility-guide"><b>راهنمای نمایش اطلاعات</b><span><strong>عمومی:</strong> همه، حتی افراد خارج از گروه، می‌توانند ببینند.</span><span><strong>فقط اعضا:</strong> فقط اعضای تأییدشده و واردشده می‌توانند ببینند.</span><span><strong>خصوصی:</strong> در پروفایل عمومی دیده نمی‌شود؛ فقط خودت و مدیر از پنل مدیریت به آن دسترسی دارید.</span></div>
     <div class="status-banner \${d.status}">
       <span class="seal sm">\${d.status === "approved" ? "✓" : "…"}</span>
       <div>\${d.status === "approved" ? "عضویت تایید شده — پروفایلت برای اعضا و QR کارت ویزیت فعاله." : "در انتظار تایید مدیر گروه — به‌محض تایید، پروفایلت فعال می‌شه."}</div>
@@ -916,7 +918,7 @@ async function viewProfile(){
         <label class="field">پلتفرم (واتساپ/تلگرام/…)<input type="text" id="socPlatform"></label>
         <label class="field">آیدی یا لینک<input type="text" id="socValue"></label>
         <label class="field">سطح دسترسی
-          <select id="socVis"><option value="members">فقط اعضا</option><option value="public">عمومی</option><option value="private">خصوصی</option></select>
+          <select id="socVis"><option value="members">فقط اعضا</option><option value="public">عمومی</option><option value="private">خصوصی</option></select><small class="visibility-help">برای لینک‌های اجتماعی: عمومی برای همه، اعضا فقط برای اعضای تأییدشده، خصوصی فقط برای خودت و مدیر.</small>
         </label>
       </div>
       <button class="btn sm" id="addSocBtn">افزودن</button>
@@ -930,7 +932,7 @@ async function viewProfile(){
         <label class="field">عنوان<input type="text" id="fldKey"></label>
         <label class="field">مقدار<input type="text" id="fldValue"></label>
         <label class="field">سطح دسترسی
-          <select id="fldVis"><option value="members">فقط اعضا</option><option value="public">عمومی</option><option value="private">خصوصی</option></select>
+          <select id="fldVis"><option value="members">فقط اعضا</option><option value="public">عمومی</option><option value="private">خصوصی</option></select><small class="visibility-help">اطلاعات عمومی روی صفحه پروفایل، اطلاعات اعضا فقط بعد از ورود، و اطلاعات خصوصی فقط برای خودت و مدیر.</small>
         </label>
       </div>
       <button class="btn sm" id="addFldBtn">افزودن</button>
