@@ -36,6 +36,9 @@ CREATE TABLE IF NOT EXISTS doctors (
   bio TEXT,
   avatar_key TEXT,                     -- KV key for the uploaded avatar
   card_template TEXT DEFAULT 'default',-- chosen business-card template
+  imc_guid TEXT,
+  imc_profile_url TEXT,
+  imc_photo_url TEXT,
   role TEXT NOT NULL DEFAULT 'member', -- member | admin
   status TEXT NOT NULL DEFAULT 'pending', -- pending | approved | rejected
   created_at TEXT DEFAULT (datetime('now')),

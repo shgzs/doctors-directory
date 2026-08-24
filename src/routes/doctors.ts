@@ -52,7 +52,9 @@ doctors.get("/me/profile", requireAuthenticated, async (c) => {
     `SELECT d.id, d.public_id, d.phone, d.full_name, d.official_name, d.roster_id, d.specialty_main, d.city, d.phone_public,
             d.medical_council_number, d.email, d.bio, d.avatar_key, d.card_template, d.status, d.role,
             r.student_number, r.council_number AS roster_council_number,
-            r.imc_guid, r.imc_profile_url, r.imc_photo_url
+            COALESCE(d.imc_guid, r.imc_guid) AS imc_guid,
+            COALESCE(d.imc_profile_url, r.imc_profile_url) AS imc_profile_url,
+            COALESCE(d.imc_photo_url, r.imc_photo_url) AS imc_photo_url
      FROM doctors d LEFT JOIN class_roster r ON r.id = d.roster_id WHERE d.id = ?`
   ).bind(auth.sub).first<Record<string, unknown>>();
   if (!doctor) return c.json({ error: "پروفایل پیدا نشد" }, 404);
@@ -76,7 +78,9 @@ doctors.get("/:id", async (c) => {
     `SELECT d.id, d.public_id, d.full_name, d.specialty_main, d.city, d.phone_public, d.phone,
             d.medical_council_number, d.email, d.bio, d.avatar_key, d.card_template,
             r.student_number, r.council_number AS roster_council_number,
-             r.imc_guid, r.imc_profile_url, r.imc_photo_url
+            COALESCE(d.imc_guid, r.imc_guid) AS imc_guid,
+            COALESCE(d.imc_profile_url, r.imc_profile_url) AS imc_profile_url,
+            COALESCE(d.imc_photo_url, r.imc_photo_url) AS imc_photo_url
      FROM doctors d LEFT JOIN class_roster r ON r.id = d.roster_id
      WHERE (d.id = ? OR d.public_id = ? OR d.medical_council_number = ?) AND d.status = 'approved'`
   )

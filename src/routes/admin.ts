@@ -20,7 +20,7 @@ admin.get("/doctors", async (c) => {
   const { status, q } = c.req.query();
   let sql = `SELECT id, phone, full_name, official_name,
                     CASE WHEN official_name IS NOT NULL AND official_name != full_name THEN 1 ELSE 0 END AS name_changed,
-                    specialty_main, city, role, status, created_at, updated_at
+                    specialty_main, city, role, status, imc_guid, imc_profile_url, created_at, updated_at
              FROM doctors WHERE 1=1`;
   const binds: string[] = [];
   if (status) { sql += " AND status = ?"; binds.push(status); }
@@ -150,6 +150,18 @@ admin.patch("/doctors/:id/role", async (c) => {
     .bind(body.role, c.req.param("id")).run();
   if (!result.success || !result.meta.changes) return c.json({ error: "کاربر پیدا نشد" }, 404);
   return c.json({ ok: true });
+});
+
+admin.patch("/doctors/:id/imc", async (c) => {
+  const body = await c.req.json<{ imcGuid?: string; imcProfileUrl?: string; imcPhotoUrl?: string }>();
+  const guid = body.imcGuid?.trim() || null;
+  if (guid && !/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(guid)) return c.json({ error: "شناسه نظام پزشکی باید GUID باشد" }, 400);
+  const profileUrl = body.imcProfileUrl?.trim() || (guid ? `https://membersearch.irimc.org/member/profile?id=${guid}` : null);
+  const result = await c.env.DB.prepare(
+    "UPDATE doctors SET imc_guid = ?, imc_profile_url = ?, imc_photo_url = ?, updated_at = datetime('now') WHERE id = ?"
+  ).bind(guid, profileUrl, body.imcPhotoUrl?.trim() || null, c.req.param("id")).run();
+  if (!result.success || !result.meta.changes) return c.json({ error: "کاربر پیدا نشد" }, 404);
+  return c.json({ ok: true, imcProfileUrl: profileUrl });
 });
 
 export default admin;
