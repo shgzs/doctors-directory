@@ -358,7 +358,7 @@ function initials(name){
 }
 function displayPhone(value){
   const original = String(value || "").trim();
-  const raw = original.replace(/[^0-9+]/g, "").replace(/^\+/, "");
+  const raw = original.replace(/[^0-9+]/g, "").replace(/^\\+/, "");
   if (/^98\d{10}$/.test(raw)) return "0" + raw.slice(2);
   if (/^0098\d{10}$/.test(raw)) return "0" + raw.slice(4);
   return original;
