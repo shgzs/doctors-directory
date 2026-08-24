@@ -58,12 +58,18 @@ admin.patch("/roster/:id/phone", async (c) => {
 
   const used = await c.env.DB.prepare("SELECT id FROM doctors WHERE phone = ?")
     .bind(phone).first<{ id: string }>();
-if (used && used.id !== roster.doctor_id) return c.json({ error: "این شماره قبلاً برای فرد دیگری ثبت شده است" }, 409);
 
   let doctorId = roster.doctor_id as string | null;
   if (doctorId) {
+    if (used && used.id !== doctorId) return c.json({ error: "این شماره قبلاً برای فرد دیگری ثبت شده است" }, 409);
     await c.env.DB.prepare("UPDATE doctors SET phone = ?, updated_at = datetime('now') WHERE id = ?")
       .bind(phone, doctorId).run();
+  } else if (used) {
+    // The person registered first, before the roster row was linked.
+    // Reuse that existing account instead of trying to create a duplicate.
+    doctorId = used.id;
+    await c.env.DB.prepare("UPDATE doctors SET roster_id = ?, updated_at = datetime('now') WHERE id = ?")
+      .bind(rosterId, doctorId).run();
   } else {
     doctorId = crypto.randomUUID();
     await c.env.DB.prepare(
