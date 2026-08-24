@@ -226,7 +226,8 @@ label.field{display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:va
 .contact-row:first-of-type{border-top:none;margin-top:6px}
 .contact-row .ic{width:30px;height:30px;border-radius:9px;background:var(--paper-2);display:grid;place-items:center;flex:none;font-size:14px}
 .share-row{display:flex;gap:8px;margin-top:16px}
-.public-profile-shell{max-width:1040px;margin:34px auto 60px}.doctor-card-page{display:grid;grid-template-columns:minmax(350px,470px) 1fr;gap:34px;align-items:start}.doctor-business-card{min-height:520px;padding:30px;border-radius:24px;background:linear-gradient(145deg,#fffdf7 0%,#f4e4c8 100%);border:1px solid #d9bf84;box-shadow:0 18px 50px #62431f18}.doctor-business-card .avatar{width:156px;height:156px;font-size:42px;border:7px solid #fffaf0;box-shadow:0 7px 22px #62431f20}.doctor-business-card h2{font-size:26px;margin-top:14px}.doctor-business-card .stamp{font-size:14px;padding:6px 14px}.doctor-business-card.template-calm{background:linear-gradient(145deg,#f4fbf9,#dcefeb);border-color:#acd0ca;box-shadow:0 18px 50px #2b677718}.doctor-business-card.template-calm .seal{background:#2b6777;color:#fff}.doctor-business-card.template-dark{background:linear-gradient(145deg,#173943,#10252d);border-color:#477b7a;color:#f7f1e5;box-shadow:0 18px 50px #10252d44}.doctor-business-card.template-dark .muted,.doctor-business-card.template-dark .contact-row{color:#d5e5e2}.doctor-business-card.template-dark .contact-row{border-color:#477b7a}.doctor-business-card.template-dark .contact-row .ic{background:#2b6777;color:#fff}.doctor-business-card.template-dark .stamp{color:#f7f1e5;border-color:#d9bf84}.doctor-business-card.template-dark .avatar{border-color:#2b6777}.doctor-card-details{padding:12px 0}.doctor-card-details h1{font-size:clamp(26px,4vw,40px);line-height:1.45;margin:12px 0 5px}.doctor-card-details .lead{font-size:16px;color:var(--ink-soft);margin:0 0 22px}.public-profile-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:22px}.profile-back{display:inline-flex;align-items:center;gap:7px;color:var(--oxblood);font-weight:700;margin-bottom:18px}
+.public-profile-shell{max-width:1040px;margin:34px auto 60px}.doctor-card-page{display:grid;grid-template-columns:minmax(350px,470px) 1fr;gap:34px;align-items:start}.doctor-business-card{min-height:520px;padding:30px;border-radius:24px;background:linear-gradient(145deg,#fffdf7 0%,#f4e4c8 100%);border:1px solid #d9bf84;box-shadow:0 18px 50px #62431f18}.doctor-business-card .avatar{width:156px;height:156px;font-size:42px;border:7px solid #fffaf0;box-shadow:0 7px 22px #62431f20}.doctor-business-card h2{font-size:26px;margin-top:14px}.doctor-business-card .stamp{font-size:14px;padding:6px 14px}.doctor-business-card.template-calm{background:linear-gradient(145deg,#f4fbf9,#dcefeb);border-color:#acd0ca;box-shadow:0 18px 50px #2b677718}.doctor-business-card.template-calm .seal{background:#2b6777;color:#fff}.doctor-business-card.template-dark{background:linear-gradient(145deg,#173943,#10252d);border-color:#477b7a;color:#f7f1e5;box-shadow:0 18px 50px #10252d44}.doctor-business-card.template-dark .muted,.doctor-business-card.template-dark .contact-row{color:#d5e5e2}.doctor-business-card.template-dark .contact-row{border-color:#477b7a}.doctor-business-card.template-dark .contact-row .ic{background:#2b6777;color:#fff}.doctor-business-card.template-dark .stamp{color:#f7f1e5;border-color:#d9bf84}.doctor-business-card.template-dark .avatar{border-color:#2b6777}.doctor-business-card.template-dark h2,.doctor-business-card.template-dark h3,.doctor-business-card.template-dark p,.doctor-business-card.template-dark div{color:inherit}.doctor-card-details{padding:12px 0}.doctor-card-details h1{font-size:clamp(26px,4vw,40px);line-height:1.45;margin:12px 0 5px}.doctor-card-details .lead{font-size:16px;color:var(--ink-soft);margin:0 0 22px}.public-profile-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:22px}.profile-back{display:inline-flex;align-items:center;gap:7px;color:var(--oxblood);font-weight:700;margin-bottom:18px}.social-links{display:flex;flex-wrap:wrap;gap:8px}.social-link{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border:1px solid var(--line);border-radius:10px;color:var(--ink);background:var(--card);text-decoration:none}.social-link:hover{border-color:var(--oxblood);color:var(--oxblood)}.social-icon{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:800}.social-icon.instagram{background:linear-gradient(135deg,#f9ce34,#ee2a7b,#6228d7)}.social-icon.telegram{background:#229ed9}.social-icon.whatsapp{background:#25d366}.social-icon.linkedin{background:#0a66c2}.social-icon.website{background:var(--clinical)}.print-card-page{min-height:calc(100vh - 130px);display:grid;place-items:center;padding:35px 0}.print-card-toolbar{display:flex;justify-content:center;gap:10px;margin-bottom:18px}.print-business-card{width:90mm;min-height:55mm;box-sizing:border-box;border-radius:5mm;padding:8mm;background:linear-gradient(135deg,#fffdf7,#f0dfbd);border:1px solid #c9a862;box-shadow:0 18px 50px #62431f28;position:relative;overflow:hidden;color:#24343a}.print-business-card::after{content:"";position:absolute;width:70mm;height:70mm;border:1px solid #b4924c55;border-radius:50%;left:-35mm;bottom:-45mm}.print-business-card.calm{background:linear-gradient(135deg,#f4fbf9,#d8eeea);border-color:#9bc6bf}.print-business-card.dark{background:linear-gradient(135deg,#173943,#10252d);border-color:#477b7a;color:#f7f1e5}.print-business-card.dark .print-muted{color:#c9dedb}.print-card-top{display:flex;align-items:center;gap:5mm;position:relative;z-index:1}.print-card-top .avatar{width:27mm;height:27mm;font-size:24px;border:2mm solid #fffaf0}.print-business-card.dark .print-card-top .avatar{border-color:#2b6777}.print-card-name{font-size:19px;font-weight:800;line-height:1.5}.print-card-specialty{font-size:11px;margin-top:2mm;color:#7c2f32}.print-business-card.dark .print-card-specialty{color:#e6c77f}.print-card-rule{height:1px;background:currentColor;opacity:.2;margin:6mm 0 4mm}.print-card-contact{display:flex;flex-direction:column;gap:2mm;font-size:10.5px;position:relative;z-index:1}.print-muted{color:#52656a}.print-card-footer{display:flex;justify-content:space-between;gap:5mm;margin-top:5mm;font-size:9px;position:relative;z-index:1}.print-card-url{direction:ltr;white-space:nowrap}
+@media print{body{background:#fff!important}.topbar,.site, .print-card-toolbar,.profile-back{display:none!important}.shell{max-width:none!important;padding:0!important}.print-card-page{min-height:0;padding:0}.print-business-card{box-shadow:none;margin:0;break-inside:avoid}}
 
 .detail-block{margin-bottom:22px}
 .detail-block h3{font-size:16px;color:var(--ink-soft);margin-bottom:10px;display:flex;align-items:center;gap:8px}
@@ -356,10 +357,23 @@ function initials(name){
   return (parts[0]?.[0] || "؟") + (parts[1]?.[0] || "");
 }
 function displayPhone(value){
-  const raw = String(value || "").trim();
+  const original = String(value || "").trim();
+  const raw = original.replace(/[^0-9+]/g, "").replace(/^\+/, "");
   if (/^98\d{10}$/.test(raw)) return "0" + raw.slice(2);
   if (/^0098\d{10}$/.test(raw)) return "0" + raw.slice(4);
-  return raw;
+  return original;
+}
+function socialLinkHtml(s){
+  const platform = String(s.platform || "").trim();
+  const key = platform.toLowerCase();
+  const value = String(s.value || "").trim();
+  let href = value;
+  let cls = "website", glyph = "↗";
+  if (key.includes("instagram") || key.includes("اینست")) { cls = "instagram"; glyph = "◎"; if (!/^https?:\/\//i.test(href)) href = "https://instagram.com/" + href.replace(/^@/, ""); }
+  else if (key.includes("telegram") || key.includes("تلگرام")) { cls = "telegram"; glyph = "➤"; if (!/^https?:\/\//i.test(href)) href = "https://t.me/" + href.replace(/^@/, ""); }
+  else if (key.includes("whatsapp") || key.includes("واتساپ")) { cls = "whatsapp"; glyph = "◉"; if (!/^https?:\/\//i.test(href)) href = "https://wa.me/" + displayPhone(href).replace(/^0/, "98"); }
+  else if (key.includes("linkedin") || key.includes("لینکدین")) { cls = "linkedin"; glyph = "in"; }
+  return '<a class="social-link" href="' + esc(href) + '" target="_blank" rel="noopener noreferrer"><span class="social-icon ' + cls + '">' + glyph + '</span><span>' + esc(platform) + '</span></a>';
 }
 function avatarHtml(doctor, size){
   const cls = "avatar " + size;
@@ -595,8 +609,8 @@ async function openDoctorModal(id){
               \${d.specialty_main ? '<span class="stamp">' + esc(d.specialty_main) + "</span>" : ""}
               \${contactRowsHtml(d, canSeePrivate)}
               <div class="share-row">
-                <a class="btn ghost sm" style="flex:1" href="\${url}">پروفایل مستقل</a>
-                <button class="btn brass sm" id="vcardBtn">افزودن مخاطب</button>
+                <a class="btn ghost sm" style="flex:1" href="\${url}">مشاهده صفحه</a>
+                <button class="btn brass sm" id="vcardBtn">ذخیره شماره</button>
               </div>
             </div>
             <div>
@@ -685,18 +699,40 @@ async function viewPublicProfile(key){
             <span class="seal">✓<span class="cross">+</span></span>\${avatarHtml(d, "lg")}
             <h2>\${esc(d.full_name || "بدون نام")}</h2>\${d.specialty_main ? '<span class="stamp">' + esc(d.specialty_main) + "</span>" : ""}
             <p class="muted">\${esc(d.city || "")}</p>\${contactRowsHtml(d, Boolean(ME))}
-            <div class="public-profile-actions"><button class="btn brass sm" id="publicVcardBtn">افزودن مخاطب</button>\${officialUrl ? '<a class="btn ghost sm" target="_blank" rel="noopener" href="' + esc(officialUrl) + '">پروفایل نظام پزشکی</a>' : ""}</div>
+            <div class="public-profile-actions"><button class="btn brass sm" id="publicVcardBtn">ذخیره شماره</button><a class="btn ghost sm" href="#/card/\${encodeURIComponent(d.public_id || d.id)}">کارت ویزیت قابل چاپ</a>\${officialUrl ? '<a class="btn ghost sm" target="_blank" rel="noopener" href="' + esc(officialUrl) + '">نظام پزشکی</a>' : ""}</div>
           </div>
           <div class="doctor-card-details">
             <h1>\${esc(d.full_name || "پروفایل پزشک")}</h1><p class="lead">\${esc(d.specialty_main || "")}</p>
             \${d.bio ? '<div class="detail-block"><h3>درباره</h3><p>' + esc(d.bio) + "</p></div>" : ""}
             <div class="detail-block"><h3>محل‌های کار</h3>\${(d.workLocations||[]).map(l => '<div class="loc-item"><b>' + esc(l.location_name) + '</b>' + (l.address ? ' — ' + esc(l.address) : '') + '</div>').join('') || '<p class="muted">ثبت نشده</p>'}</div>
-            \${(d.socialLinks||[]).length ? '<div class="detail-block"><h3>راه‌های ارتباطی</h3>' + d.socialLinks.map(s => '<div class="link-item"><b>' + esc(s.platform) + '</b> — ' + esc(s.value) + '</div>').join('') + '</div>' : ""}
+            \${(d.socialLinks||[]).length ? '<div class="detail-block"><h3>راه‌های ارتباطی</h3><div class="social-links">' + d.socialLinks.map(s => socialLinkHtml(s)).join('') + '</div></div>' : ""}
             \${(d.extraFields||[]).length ? '<div class="detail-block"><h3>اطلاعات تکمیلی</h3>' + d.extraFields.map(f => '<div class="link-item"><b>' + esc(f.field_key) + '</b> — ' + esc(f.field_value) + '</div>').join('') + '</div>' : ""}
           </div>
         </div>
       </div>\`;
     $("publicVcardBtn").onclick = () => { const vcf = "BEGIN:VCARD\\nVERSION:3.0\\nFN:" + d.full_name + "\\nTEL:" + (d.phone_public || d.phone || "") + (d.email ? "\\nEMAIL:" + d.email : "") + "\\nEND:VCARD"; const blob = new Blob([vcf], {type:"text/vcard"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=(d.full_name||"doctor")+".vcf"; a.click(); };
+  } catch (e) { view.innerHTML = '<div class="empty">پروفایل پیدا نشد.</div>'; toast(e.message, true); }
+}
+
+async function viewBusinessCard(key){
+  try {
+    const d = await api("/api/doctors/" + encodeURIComponent(key));
+    const theme = d.card_template === "dark" ? "dark" : d.card_template === "calm" ? "calm" : "default";
+    const profileUrl = location.origin + "/d/" + (d.public_id || d.id);
+    const council = d.roster_council_number || d.medical_council_number;
+    view.innerHTML = \`
+      <div class="print-card-page">
+        <div>
+          <div class="print-card-toolbar"><a class="btn ghost sm" href="#/profile-view/\${encodeURIComponent(d.public_id || d.id)}">بازگشت</a><button class="btn sm" id="printCardBtn">چاپ کارت</button></div>
+          <article class="print-business-card \${theme}">
+            <div class="print-card-top">\${avatarHtml(d, "lg")}<div><div class="print-card-name">\${esc(d.full_name || "")}</div><div class="print-card-specialty">\${esc(d.specialty_main || "")}</div></div></div>
+            <div class="print-card-rule"></div>
+            <div class="print-card-contact">\${d.city ? '<span>⌖ ' + esc(d.city) + '</span>' : ''}\${d.phone_public ? '<span>☎ ' + esc(displayPhone(d.phone_public)) + '</span>' : ''}\${d.email ? '<span>✉ ' + esc(d.email) + '</span>' : ''}\${council ? '<span>نظام پزشکی: ' + esc(council) + '</span>' : ''}</div>
+            <div class="print-card-footer"><span>پزشک</span><span class="print-card-url">\${esc(profileUrl.replace(/^https?:\\/\\//, ""))}</span></div>
+          </article>
+        </div>
+      </div>\`;
+    $("printCardBtn").onclick = () => window.print();
   } catch (e) { view.innerHTML = '<div class="empty">پروفایل پیدا نشد.</div>'; toast(e.message, true); }
 }
 
@@ -1015,6 +1051,7 @@ async function renderRoute(){
   if (path === "home" || path === "") return viewHome();
   if (path === "directory") return viewDirectory();
   if (path.startsWith("profile-view/")) return viewPublicProfile(decodeURIComponent(path.slice("profile-view/".length)));
+  if (path.startsWith("card/")) return viewBusinessCard(decodeURIComponent(path.slice("card/".length)));
   if (path === "requests") return viewRequests();
   if (path.startsWith("request/")) return viewRequestDetail(decodeURIComponent(path.slice("request/".length)));
   if (path === "referrals") return viewReferrals();
