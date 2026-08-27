@@ -790,8 +790,7 @@ async function viewAdminDoctor(key){
         <label class="field">نقش<select id="admRole"><option value="member" \${d.role === "member" ? "selected" : ""}>عضو</option><option value="admin" \${d.role === "admin" ? "selected" : ""}>مدیر</option></select></label>
         <label class="field">وضعیت<select id="admStatus"><option value="approved" \${d.status === "approved" ? "selected" : ""}>تایید‌شده</option><option value="pending" \${d.status === "pending" ? "selected" : ""}>در انتظار</option><option value="hidden" \${d.status === "hidden" ? "selected" : ""}>مخفی‌شده</option><option value="rejected" \${d.status === "rejected" ? "selected" : ""}>رد‌شده</option></select></label>
         <label class="field">قالب کارت<select id="admTemplate"><option value="default" \${d.card_template === "default" ? "selected" : ""}>دفترچه پزشکی</option><option value="calm" \${d.card_template === "calm" ? "selected" : ""}>آرام و دوستانه</option><option value="dark" \${d.card_template === "dark" ? "selected" : ""}>رسمی و تیره</option></select></label>
-        <label class="field">GUID نظام پزشکی<input id="admImcGuid" value="\${esc(d.imc_guid || "")}"></label>
-        <label class="field full">لینک پروفایل نظام پزشکی<input id="admImcUrl" value="\${esc(d.imc_profile_url || "")}"></label>
+        <label class="field">شناسه پروفایل نظام پزشکی (GUID)<input id="admImcGuid" value="\${esc(d.effective_imc_guid || d.imc_guid || "")}"><small class="visibility-help">فقط GUID را وارد کن؛ لینک کامل خودکار ساخته می‌شود.</small></label>
         <label class="field full">درباره<textarea id="admBio">\${esc(d.bio || "")}</textarea></label>
       </div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="btn" id="saveAdminDoctor">ذخیره اطلاعات</button><a class="btn ghost" href="#/profile-view/\${encodeURIComponent(d.public_id || d.id)}">مشاهده پروفایل</a></div></div>
       <div class="card"><h3 style="font-size:15px">اطلاعات وابسته</h3><p class="muted">محل‌های کار، شبکه‌های اجتماعی و فیلدهای تکمیلی فعلاً از صفحه پروفایل خود فرد مدیریت می‌شوند و اینجا برای بررسی نمایش داده شده‌اند.</p><div class="admin-detail-list"><b>محل‌های کار:</b> \${(d.workLocations || []).map(x => esc(x.location_name)).join("، ") || "ثبت نشده"}<br><b>شبکه‌های اجتماعی:</b> \${(d.socialLinks || []).map(x => esc(x.platform)).join("، ") || "ثبت نشده"}<br><b>فیلدهای تکمیلی:</b> \${(d.extraFields || []).map(x => esc(x.field_key)).join("، ") || "ثبت نشده"}</div></div>\`;
@@ -802,7 +801,7 @@ async function viewAdminDoctor(key){
           phonePublic: $("admPhonePublic").value, specialtyMain: $("admSpecialty").value, city: $("admCity").value,
           medicalCouncilNumber: $("admCouncil").value, email: $("admEmail").value, bio: $("admBio").value,
           role: $("admRole").value, status: $("admStatus").value, cardTemplate: $("admTemplate").value,
-          imcGuid: $("admImcGuid").value, imcProfileUrl: $("admImcUrl").value
+          imcGuid: $("admImcGuid").value
         })}); toast("اطلاعات ذخیره شد");
       } catch (e) { toast(e.message, true); }
     };
@@ -885,6 +884,7 @@ async function viewProfile(){
         <label class="field">شهر<input type="text" id="pfCity" value="\${esc(d.city||"")}"></label>
         <label class="field">شماره عمومی (برای بیماران)<input type="tel" id="pfPhonePublic" value="\${esc(d.phone_public||"")}"></label>
         <label class="field">شماره نظام پزشکی<input type="text" id="pfCouncil" value="\${esc(d.medical_council_number||"")}"></label>
+        <label class="field">شناسه پروفایل نظام پزشکی (GUID)<input type="text" id="pfImcGuid" value="\${esc(d.imc_guid||"")}" placeholder="مثلاً 62ddd6fc-…"><small class="visibility-help">فقط GUID را وارد کن؛ لینک کامل به‌صورت خودکار ساخته می‌شود.</small></label>
         <label class="field">ایمیل<input type="email" id="pfEmail" value="\${esc(d.email||"")}"></label>
         <label class="field">قالب کارت<select id="pfCardTemplate"><option value="default" \${d.card_template === "default" ? "selected" : ""}>دفترچه پزشکی</option><option value="calm" \${d.card_template === "calm" ? "selected" : ""}>آرام و دوستانه</option><option value="dark" \${d.card_template === "dark" ? "selected" : ""}>رسمی و تیره</option></select></label>
         <label class="field full">درباره من<textarea id="pfBio">\${esc(d.bio||"")}</textarea></label>
@@ -977,7 +977,7 @@ async function viewProfile(){
     try {
       await api("/api/doctors/me/profile", { method: "PUT", body: JSON.stringify({
         fullName: $("pfName").value, specialtyMain: $("pfSpecialty").value, city: $("pfCity").value,
-        phonePublic: $("pfPhonePublic").value, medicalCouncilNumber: $("pfCouncil").value, rosterId: $("pfRosterId").value || undefined,
+        phonePublic: $("pfPhonePublic").value, medicalCouncilNumber: $("pfCouncil").value, imcGuid: $("pfImcGuid").value, rosterId: $("pfRosterId").value || undefined,
         email: $("pfEmail").value, bio: $("pfBio").value, cardTemplate: $("pfCardTemplate").value
       })});
       toast("پروفایل ذخیره شد"); await loadMe(); renderChrome();

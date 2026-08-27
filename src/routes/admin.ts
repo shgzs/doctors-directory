@@ -116,8 +116,9 @@ admin.patch("/roster/:id/imc", async (c) => {
     rosterId
   ).run();
   if (roster.doctor_id) {
-    await c.env.DB.prepare("UPDATE doctors SET medical_council_number = ?, updated_at = datetime('now') WHERE id = ?")
-      .bind(body.councilNumber?.trim() || null, roster.doctor_id).run();
+    await c.env.DB.prepare(
+      "UPDATE doctors SET medical_council_number = ?, imc_guid = ?, imc_profile_url = ?, imc_photo_url = ?, updated_at = datetime('now') WHERE id = ?"
+    ).bind(body.councilNumber?.trim() || null, guid, profileUrl, body.imcPhotoUrl?.trim() || null, roster.doctor_id).run();
   }
   return c.json({ ok: true, imcProfileUrl: profileUrl });
 });

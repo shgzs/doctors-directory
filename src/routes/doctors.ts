@@ -152,7 +152,12 @@ doctors.put("/me/profile", requireAuthenticated, async (c) => {
     bio?: string;
     cardTemplate?: string;
     rosterId?: string;
+    imcGuid?: string;
   }>();
+
+  const imcGuid = body.imcGuid?.trim() || null;
+  if (imcGuid && !/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(imcGuid)) return c.json({ error: "شناسه نظام پزشکی باید GUID معتبر باشد" }, 400);
+  const imcProfileUrl = imcGuid ? `https://membersearch.irimc.org/member/profile?id=${imcGuid}` : null;
 
   if (body.rosterId) {
     const roster = await c.env.DB.prepare("SELECT id, doctor_id, official_name FROM class_roster WHERE id = ?").bind(body.rosterId).first<{ id: string; doctor_id: string | null; official_name: string }>();
@@ -174,6 +179,7 @@ doctors.put("/me/profile", requireAuthenticated, async (c) => {
        email = COALESCE(?, email),
        bio = COALESCE(?, bio),
        card_template = COALESCE(?, card_template),
+       imc_guid = COALESCE(?, imc_guid), imc_profile_url = COALESCE(?, imc_profile_url),
        updated_at = datetime('now')
      WHERE id = ?`
   )
@@ -186,6 +192,7 @@ doctors.put("/me/profile", requireAuthenticated, async (c) => {
       body.email ?? null,
       body.bio ?? null,
       body.cardTemplate ?? null,
+      imcGuid, imcProfileUrl,
       auth.sub
     )
     .run();
