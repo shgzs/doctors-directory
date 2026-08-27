@@ -3,6 +3,7 @@ import type { Env } from "../types";
 import { requireAdmin } from "../lib/middleware";
 import { normalizePhone } from "../lib/phone";
 import { normalizePersianSearch, persianSearchSql } from "../lib/persian-text";
+import { extractImcGuid } from "../lib/imc";
 
 const admin = new Hono<{ Bindings: Env }>();
 admin.use("*", requireAdmin);
@@ -99,8 +100,8 @@ admin.patch("/roster/:id/imc", async (c) => {
     .bind(rosterId).first<Record<string, any>>();
   if (!roster) return c.json({ error: "فرد موردنظر پیدا نشد" }, 404);
 
-  const guid = body.imcGuid?.trim() || null;
-  if (guid && !/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(guid)) {
+  const guid = extractImcGuid(body.imcGuid);
+  if (body.imcGuid?.trim() && !guid) {
     return c.json({ error: "شناسه نظام پزشکی باید به شکل GUID باشد" }, 400);
   }
   const profileUrl = body.imcProfileUrl?.trim() || (guid ? `https://membersearch.irimc.org/member/profile?id=${guid}` : null);
@@ -161,8 +162,8 @@ admin.patch("/doctors/:id/role", async (c) => {
 
 admin.patch("/doctors/:id/imc", async (c) => {
   const body = await c.req.json<{ imcGuid?: string; imcProfileUrl?: string; imcPhotoUrl?: string }>();
-  const guid = body.imcGuid?.trim() || null;
-  if (guid && !/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(guid)) return c.json({ error: "شناسه نظام پزشکی باید GUID باشد" }, 400);
+  const guid = extractImcGuid(body.imcGuid);
+  if (body.imcGuid?.trim() && !guid) return c.json({ error: "GUID یا لینک معتبر نظام پزشکی وارد کن" }, 400);
   const profileUrl = body.imcProfileUrl?.trim() || (guid ? `https://membersearch.irimc.org/member/profile?id=${guid}` : null);
   const result = await c.env.DB.prepare(
     "UPDATE doctors SET imc_guid = ?, imc_profile_url = ?, imc_photo_url = ?, updated_at = datetime('now') WHERE id = ?"
@@ -210,8 +211,8 @@ admin.put("/doctors/:id/profile", async (c) => {
     const used = await c.env.DB.prepare("SELECT id FROM doctors WHERE phone = ? AND id != ?").bind(phone, doctor.id).first<{ id: string }>();
     if (used) return c.json({ error: "این شماره قبلاً برای فرد دیگری ثبت شده است" }, 409);
   }
-  const guid = body.imcGuid?.trim() || null;
-  if (guid && !/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(guid)) return c.json({ error: "شناسه نظام پزشکی باید به شکل GUID باشد" }, 400);
+  const guid = extractImcGuid(body.imcGuid);
+  if (body.imcGuid?.trim() && !guid) return c.json({ error: "GUID یا لینک معتبر نظام پزشکی وارد کن" }, 400);
   const profileUrl = body.imcProfileUrl?.trim() || (guid ? `https://membersearch.irimc.org/member/profile?id=${guid}` : null);
   const result = await c.env.DB.prepare(
     `UPDATE doctors SET full_name = COALESCE(NULLIF(TRIM(?), ''), full_name), official_name = COALESCE(NULLIF(TRIM(?), ''), official_name),

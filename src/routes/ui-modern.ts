@@ -371,6 +371,10 @@ function displayPhone(value){
   if (raw.startsWith("0") && raw.length === 11) return raw;
   return original;
 }
+function extractImcGuid(value){
+  const text = String(value || "").trim();
+  return text.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)?.[0] || "";
+}
 function socialLinkHtml(s){
   const platform = String(s.platform || "").trim();
   const key = platform.toLowerCase();
@@ -794,6 +798,7 @@ async function viewAdminDoctor(key){
         <label class="field full">درباره<textarea id="admBio">\${esc(d.bio || "")}</textarea></label>
       </div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="btn" id="saveAdminDoctor">ذخیره اطلاعات</button><a class="btn ghost" href="#/profile-view/\${encodeURIComponent(d.public_id || d.id)}">مشاهده پروفایل</a></div></div>
       <div class="card"><h3 style="font-size:15px">اطلاعات وابسته</h3><p class="muted">محل‌های کار، شبکه‌های اجتماعی و فیلدهای تکمیلی فعلاً از صفحه پروفایل خود فرد مدیریت می‌شوند و اینجا برای بررسی نمایش داده شده‌اند.</p><div class="admin-detail-list"><b>محل‌های کار:</b> \${(d.workLocations || []).map(x => esc(x.location_name)).join("، ") || "ثبت نشده"}<br><b>شبکه‌های اجتماعی:</b> \${(d.socialLinks || []).map(x => esc(x.platform)).join("، ") || "ثبت نشده"}<br><b>فیلدهای تکمیلی:</b> \${(d.extraFields || []).map(x => esc(x.field_key)).join("، ") || "ثبت نشده"}</div></div>\`;
+    $("admImcGuid").onblur = () => { const guid = extractImcGuid($("admImcGuid").value); if (guid) $("admImcGuid").value = guid; };
     $("saveAdminDoctor").onclick = async () => {
       try {
         await api("/api/admin/doctors/" + encodeURIComponent(d.id) + "/profile", { method: "PUT", body: JSON.stringify({
@@ -938,6 +943,7 @@ async function viewProfile(){
       <button class="btn sm" id="addFldBtn">افزودن</button>
     </div>\`;
 
+  $("pfImcGuid").onblur = () => { const guid = extractImcGuid($("pfImcGuid").value); if (guid) $("pfImcGuid").value = guid; };
   const selectedDays = new Set();
   let selectedRosterName = $("pfName").value;
   let rosterSearchTimer;

@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { Env, JwtPayload } from "../types";
 import { requireApprovedMember, requireAuthenticated } from "../lib/middleware";
 import { normalizePersianSearch, persianSearchSql, rosterNameMatches } from "../lib/persian-text";
+import { extractImcGuid } from "../lib/imc";
 
 const doctors = new Hono<{ Bindings: Env }>();
 
@@ -155,8 +156,8 @@ doctors.put("/me/profile", requireAuthenticated, async (c) => {
     imcGuid?: string;
   }>();
 
-  const imcGuid = body.imcGuid?.trim() || null;
-  if (imcGuid && !/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(imcGuid)) return c.json({ error: "شناسه نظام پزشکی باید GUID معتبر باشد" }, 400);
+  const imcGuid = extractImcGuid(body.imcGuid);
+  if (body.imcGuid?.trim() && !imcGuid) return c.json({ error: "GUID یا لینک معتبر نظام پزشکی وارد کن" }, 400);
   const imcProfileUrl = imcGuid ? `https://membersearch.irimc.org/member/profile?id=${imcGuid}` : null;
 
   if (body.rosterId) {
